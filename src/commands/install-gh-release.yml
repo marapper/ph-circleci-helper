@@ -1,0 +1,35 @@
+description: >
+  Checks for dependency and installs the binary on github releases if required.
+
+parameters:
+  url:
+    type: string
+    description: |
+      URL of the binary to be downloaded.
+  checksum:
+    type: string
+    description: |
+      SHA256 checksum of the binary.
+  binary-name:
+    type: string
+    description: |
+      Name of the binary.
+
+steps:
+  - run:
+      name: Install << parameters.binary-name >> on github
+      command: |
+        if command -v << parameters.binary-name >> >/dev/null; then
+          echo "<< parameters.binary-name >> installation already found, skipping..."
+        else
+          curl -q << parameters.url >> -L -o << parameters.binary-name >>
+          CHECKSUM=$(sha256sum << parameters.binary-name >> | awk '{ print $1 }')
+          if [[ $CHECKSUM == "<< parameters.checksum >>" ]]; then
+            chmod +x << parameters.binary-name >>
+            mv << parameters.binary-name >> /bin/<< parameters.binary-name >>
+            echo "<< parameters.binary-name >> installed successfully"
+          else
+            echo "<< parameters.binary-name >> binary checksum failed"
+            exit 1
+          fi
+        fi

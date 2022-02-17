@@ -1,27 +1,47 @@
-# Orb Project Template
+# CircleCI helper orb
 
-[![CircleCI Build Status](https://circleci.com/gh/pricehubble/.svg?style=shield "CircleCI Build Status")](https://circleci.com/gh/pricehubble/) [![CircleCI Orb Version](https://badges.circleci.com/orbs/pricehubble/ph-circleci-helper.svg)](https://circleci.com/orbs/registry/orb/pricehubble/ph-circleci-helper) [![GitHub License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](https://raw.githubusercontent.com/pricehubble//master/LICENSE) [![CircleCI Community](https://img.shields.io/badge/community-CircleCI%20Discuss-343434.svg)](https://discuss.circleci.com/c/ecosystem/orbs)
+This orb is destined to simplify common CICD operations in the landing zone (e.g. authenticating to the artifact registry, pushing and pulling images from it, bumping image tags in `ph-k8s-releaser`).
 
+## References
 
+- [CircleCI Orb Authoring guide](https://circleci.com/docs/2.0/orb-intro/#section=configuration) 
+- [GCP CLI Orb](https://github.com/CircleCI-Public/gcp-cli-orb/blob/master/src/commands/initialize.yml) used as a reference 
+- [Yaml Lint reference](https://yamllint.readthedocs.io/en/latest/) for dealing with the CI 
 
-A starter template for orb projects. Build, test, and publish orbs automatically on CircleCI with [Orb-Tools](https://circleci.com/orbs/registry/orb/circleci/orb-tools).
+### Repo structure
 
-Additional READMEs are available in each directory.
+```
+.
+├── CHANGELOG.md                # changelog to be updated manually on release
+├── Dockerfile                  # dockerfile used for integration testing
+├── LICENSE                     
+├── README.md                   
+└── src
+    ├── @orb.yml                # Chart.yaml equivalent for orbs
+    ├── commands                # Contains commands (https://circleci.com/docs/2.0/configuration-reference/#commands-requires-version-21)
+    │   ├── auth.yml            #   commands are named after the file name, auth.yml => ph-circleci-helper/auth
+    │   ├── bump.yaml
+    │   ├── install-yq.yml
+    │   └── push.yml
+    ├── examples                # Examples to be displayed on the orb registry (does not apply for private registries)
+    ├── executors               # Contains executors (https://circleci.com/docs/2.0/configuration-reference/#executors-requires-version-21)
+    │   └── cloud-sdk.yml       #   executors can be called with the file name, cloud-sdk.yml => ph-circleci-helper/cloud-sdk
+    ├── jobs                    # Contains parametrized jobs (https://circleci.com/docs/2.0/configuration-reference/#jobs)
+    ├── scripts                 # Contains shell scripts (useful for longer bash scripts and shellcheck) 
+    └── tests                   # Contains BATS unit tests
+```
 
+### Local development guide
 
-
-## Resources
-
-[CircleCI Orb Registry Page](https://circleci.com/orbs/registry/orb/pricehubble/) - The official registry page of this orb for all versions, executors, commands, and jobs described.
-[CircleCI Orb Docs](https://circleci.com/docs/2.0/orb-intro/#section=configuration) - Docs for using and creating CircleCI Orbs.
-
-### How to Contribute
-
-We welcome [issues](https://github.com/pricehubble//issues) to and [pull requests](https://github.com/pricehubble//pulls) against this repository!
+- Checkout the `alpha` branch 
+- Pack the orb (groups yaml files in `src/` into a single yaml) with `circleci orb pack src/ > orb.yml` 
+- Validate the orb with `circleci config validate --org-slug bitbucket/pricehubble orb.yml` 
+- Commit changes which will lint the chart, publish it with a dev tag and then run integration tests defined in `.circle/config.yml` 
 
 ### How to Publish
+
 * Create and push a branch with your new features.
-* When ready to publish a new production version, create a Pull Request from _feature branch_ to `master`.
+* When ready to publish a new production version, create a Pull Request from _feature branch_ to `main`.
 * The title of the pull request must contain a special semver tag: `[semver:<segment>]` where `<segment>` is replaced by one of the following values.
 
 | Increment | Description|
@@ -35,7 +55,4 @@ Example: `[semver:major]`
 
 * Squash and merge. Ensure the semver tag is preserved and entered as a part of the commit message.
 * On merge, after manual approval, the orb will automatically be published to the Orb Registry.
-
-
-For further questions/comments about this or other orbs, visit the Orb Category of [CircleCI Discuss](https://discuss.circleci.com/c/orbs).
 

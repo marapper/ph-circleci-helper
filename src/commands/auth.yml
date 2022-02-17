@@ -1,0 +1,82 @@
+# based on https://github.com/CircleCI-Public/gcp-cli-orb/blob/master/src/commands/initialize.yml
+description: >
+  Initializes the gcloud CLI and logs in to the Artifact registry.
+
+parameters:
+  gcloud-service-key:
+    type: env_var_name
+    default: GCLOUD_SERVICE_KEY
+    description: |
+      Name of environment variable storing the full service key JSON file for the Google project.
+
+  google-project-id:
+    type: env_var_name
+    default: DOCKER_REGISTRY_PROJECT
+    description: |
+      Name of environment variable storing the Google project ID to set as
+      default for the gcloud CLI.
+
+  google-compute-zone:
+    type: env_var_name
+    default: DOCKER_REGISTRY_ZONE
+    description: |
+      Name of the environment variable storing the Google compute zone to set as
+      default for the gcloud CLI.
+
+  gcloud-disable-prompts:
+    type: boolean
+    default: true
+    description: |
+      True answer assumed for all user prompts. Will set CLOUDSDK_CORE_DISABLE_PROMPTS=1 which
+      is helpful to avoid spamming --quiet and sometimes forgetting it
+
+  artifact-registry-auth:
+    type: boolean
+    default: true
+    description: |
+      Whether or not to authenticate to the artifact registry.
+
+  artifact-registry-region:
+    type: env_var_name
+    default: DOCKER_REGISTRY_REGION
+    description: |
+      Name of the environment variable storing the Artifact registry region e.g.
+      us-central1-docker.pkg.dev, europe-west1-docker.pkg.dev.
+
+      If no value is set for the environment variable, artifact registry authentication is skipped.
+
+steps:
+  - run:
+      name: Initialize gcloud
+      command: |
+        if [[ "<< parameters.gcloud-disable-prompts >>" = "true" ]]; then
+          export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+        fi
+
+        # https://cloud.google.com/sdk/gcloud/reference/secrets/versions/access
+        # gcloud secrets outputs (which are put in the circleCI context) is formatted as UTF-8 which can corrupt binary secrets
+        # thus, we base64 encode the value and then trim '_-/+' and then decode it
+        echo ${<< parameters.gcloud-service-key >>} | tr '_-' '/+' | base64 -d > ${HOME}/gcloud-service-key.json
+        gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+
+        # disable analytics
+        gcloud config set core/disable_usage_reporting true
+        gcloud config set core/disable_file_logging true
+        gcloud config set component_manager/disable_update_check true
+
+        # configure project and region
+        gcloud config set project ${<< parameters.google-project-id >>}
+        gcloud config set compute/zone ${<< parameters.google-compute-zone >>}
+
+  - when:
+      condition: << parameters.artifact-registry-auth >>
+      steps:
+      - run:
+          name: Authenticate to the artifact registry
+          command: |
+            # authenticate to the artifact registry
+            if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
+              echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
+            else
+              gcloud auth configure-docker ${<< parameters.artifact-registry-region >>}
+            fi

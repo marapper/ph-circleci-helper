@@ -1,0 +1,47 @@
+description: >
+  Tag and existing docker image and pushes it to the registry
+
+parameters:
+  artifact-registry-url:
+    type: env_var_name
+    default: DOCKER_REGISTRY_URL
+    description: |
+      Name of environment variable storing the docker artifact registry url in the
+      <region>-docker.pkg.dev/<project>/<name> format
+
+  team:
+    type: string
+    description: |
+      Name of the team owning the application.
+
+  app:
+    type: string
+    description: |
+      Name of the application.
+
+  tag:
+    type: string
+    default: ""
+    description: |
+      Tag of the image built. If not given, defaults to '${CIRCLE_BUILD_NUM}.${CIRCLE_SHA1}'
+
+  source-tag:
+    type: string
+    description: |
+      Original tag of the image built. Will be retagged to match the Artifact registry format
+
+steps:
+  - run:
+      name: Push image
+      command: |
+        IMAGE_FULL_PATH="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>"
+
+        if [[ -z "<< parameters.tag >>" ]]; then
+          IMAGE_TAG="${CIRCLE_BUILD_NUM}.${CIRCLE_SHA1}"
+        else
+          IMAGE_TAG="<< parameters.tag >>"
+        fi
+
+        IMAGE="${IMAGE_FULL_PATH}:${IMAGE_TAG}"
+        docker tag << parameters.source-tag >> $IMAGE
+        docker push $IMAGE

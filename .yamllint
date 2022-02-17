@@ -5,3 +5,4 @@ rules:
         max: 200
         allow-non-breakable-inline-mappings: true
 
+    # trailing-spaces: disable

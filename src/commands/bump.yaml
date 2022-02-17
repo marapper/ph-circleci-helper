@@ -1,0 +1,126 @@
+description: >
+  Bumps the version of a given application in ph-k8s-releaser.
+
+parameters:
+  releaser-repo:
+    type: string
+    default: ph-releaser
+    description: |
+      Name of the releaser repo to clone and bump.
+
+  bitbucket-access-key:
+    type: env_var_name
+    default: BITBUCKET_K8S_RELEASER_SECRET_ID
+    description: |
+      Name of environment variable storing the Google managed secret self link containing
+      the private ssh key with write permissions to the ph-k8s-releaser / ph-releaser repo.
+
+      gcloud secrets versions access is used so the auth/ command must be used beforehand
+      with a service account that has secretAccessor role to the secret.
+
+  artifact-registry-url:
+    type: env_var_name
+    default: DOCKER_REGISTRY_URL
+    description: |
+      Name of environment variable storing the docker artifact registry url in the
+      <region>-docker.pkg.dev/<project>/<name> format
+
+  value-file:
+    type: string
+    default: ""
+    description: |
+      Value files which should be bumped.
+
+  value-tag-reference:
+    type: string
+    default: ".image.tag"
+    description: |
+      Reference of the image tag within the yaml file.
+
+  team:
+    type: string
+    description: |
+      Name of the team owning the application whose version is being bumped. e.g. sre
+
+  app:
+    type: string
+    description: |
+      Name of the application being bumped.
+
+  env:
+    type: string
+    description: |
+      Name of the environment where the application will be bumped.
+
+  tag:
+    type: string
+    default: ""
+    description: |
+      Tag of the image-built. If not given, defaults to '${CIRCLE_BUILD_NUM}.${CIRCLE_SHA1}'
+
+steps:
+  - run:
+      name: Fetch and decode SSH key
+      command: |
+        mkdir -p ~/.ssh
+
+        gcloud secrets versions access ${<< parameters.bitbucket-access-key >>} \
+          --format='get(payload.data)' | tr '_-' '/+' | base64 -d > ~/.ssh/id_releaser
+        chmod 0400 ~/.ssh/id_releaser
+
+        # verify private key by generating a public key from said key
+        ssh-keygen -y -e -f ~/.ssh/id_releaser >/dev/null 2>&1
+        if [[ $? -ne 0 ]]; then
+          echo "The SSH key fetched is invalid. Please check the IAM permissions of the secret or it's format"
+        fi
+
+        # add bitbucket to known hosts
+        # https://support.atlassian.com/bitbucket-cloud/docs/configure-ssh-and-two-step-verification/
+        echo "bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcafrgMeLzaFPsw2kNvEcqTKl/VqLat/MaB33pZy0y3rJZtnqwR2qOOvbwKZYKiEO1O6VqNEBxKvJJelCq0dTXWT5pbO2gDXC6h6QDXCaHo6pOHGPUy+YBaGQRGuSusMEASYiWunYN0vCAI8QaXnWMXNMdFP3jHAJH0eDsoiGnLPBlBp4TNm6rYI74nMzgz3B9IikW4WVK+dc8KZJZWYjAuORU3jc1c/NPskD2ASinf8v3xnfXeukU0sJ5N6m5E8VLjObPEO+mN2t/FZTMZLiFqPWc/ALSqnMnnhwrNi2rbfg/rd/IpL8Le3pSBne8+seeFVBoGqzHM9yXw==" >> ~/.ssh/known_hosts
+
+  - run:
+      name: Clone repo and bump version
+      command: |
+        export GIT_SSH_COMMAND='ssh -i ~/.ssh/id_releaser -o IdentitiesOnly=yes'
+        git clone -q git@bitbucket.org:pricehubble/<< parameters.releaser-repo >>.git
+
+        IMAGE_FULL_PATH="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>"
+        if [[ -z "<< parameters.tag >>" ]]; then
+          IMAGE_TAG="${CIRCLE_BUILD_NUM}.${CIRCLE_SHA1}"
+        else
+          IMAGE_TAG="<< parameters.tag >>"
+        fi
+
+        cd << parameters.releaser-repo >>
+        if [[ -z "<< parameters.value-file >>" ]]; then
+          case << parameters.releaser-repo >> in
+            ph-releaser)
+              VALUE_FILE=apps/<< parameters.app >>/lz/<< parameters.env >>/values.yaml
+            ;;
+            ph-k8s-releaser)
+              VALUE_FILE=<< parameters.team >>/<< parameters.app >>/<< parameters.env >>/values.yaml
+            ;;
+          esac
+        else
+          VALUE_FILE=<< parameters.value-file >>
+        fi
+
+        echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_TAG\" in ${VALUE_FILE}"
+        yq e "<< parameters.value-tag-reference >> = \"$IMAGE_TAG\"" -i ${VALUE_FILE}
+
+        git add .
+        git config --global user.name 'Bumper'
+        git config --global user.email 'bumper@pricehubble.com'
+        git commit -a -F- \<<EOF
+          Bumped << parameters.team >>/<< parameters.app >>/<< parameters.env >> to ${IMAGE_TAG}
+
+          team: << parameters.team >>
+          application: << parameters.app >>
+          environment: << parameters.env >>
+          image_tag: ${IMAGE_TAG}
+          image_url: ${IMAGE_FULL_PATH}
+          build_number: ${CIRCLE_BUILD_NUM}
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
+          commit_sha: ${CIRCLE_SHA1}
+        EOF
+        git push --force
