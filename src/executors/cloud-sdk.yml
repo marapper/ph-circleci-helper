@@ -1,0 +1,21 @@
+description: >
+  Simple Google SDK executor.
+
+docker:
+  - image: 'google/cloud-sdk:<<parameters.tag>>'
+resource_class: '<< parameters.resource_class >>'
+
+parameters:
+  tag:
+    type: string
+    default: "372.0.0"
+    description: >
+      Pick a specific CloudSDK image variant (and keep it up to date):
+      https://hub.docker.com/r/google/cloud-sdk/tags
+
+  resource_class:
+    type: string
+    default: "medium"
+    description: >
+      Pick a specific docker resource class:
+      https://circleci.com/docs/2.0/executor-types/#available-docker-resource-classes
