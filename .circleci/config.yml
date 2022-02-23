@@ -33,8 +33,8 @@ jobs:
           command: |
             docker build -t documentation:latest .
       - gcr/push:
-          team: sre
-          app: documentation
+          team: growth
+          app: homepage
           source-tag: documentation:latest
 
   integration-test-bump:
@@ -45,10 +45,11 @@ jobs:
           artifact-registry-auth: false
       - gcr/install-yq
       - gcr/bump:
-          team: sre
-          app: documentation
-          env: dev
-          releaser-repo: ph-k8s-releaser
+          team: growth
+          app: homepage
+          env: predev
+          releaser-repo: ph-releaser
+          releaser-branch: sre/landing-zone
 
 workflows:
   test-pack:
