@@ -1,0 +1,37 @@
+description: >
+  Tag and existing docker image and pushes it to the registry
+
+parameters:
+  artifact-registry-url:
+    type: env_var_name
+    default: HELM_REGISTRY_URL
+    description: |
+      Name of environment variable storing the docker artifact registry url in the
+      <region>-docker.pkg.dev/<project>/<name> format
+
+  path:
+    type: string
+    description: |
+      Path to the chart, will be used to run `helm package PATH`
+
+steps:
+  - run:
+      name: Push chart
+      command: |
+        # TODO: integrate helm sign https://helm.sh/docs/topics/provenance/
+        cd << parameters.path >>
+        CHART_VERSION=$(yq e '.version' Chart.yaml)
+        CHART_NAME=$(yq e '.name' Chart.yaml)
+
+        # helm OCI accepts semver 2.0.0 and notably build metadata annotation (https://semver.org/#spec-item-10)
+        # As per the docker tag, we annotate the helm version with a commit sha and a circleci build number
+        #
+        # OCI artifact references (e.g. tags) do not support the plus sign (+). To support
+        # storing semantic versions, Helm adopts the convention of changing plus (+) to
+        # an underscore (_) in chart version tags when pushing to a registry and back to
+        # a plus (+) when pulling from a registry
+        CHART_TAG="${CHART_VERSION}+${CIRCLE_SHA1:1:5}.${CIRCLE_BUILD_NUM}"
+        helm package --version="${CHART_TAG}" .
+
+        helm push "${CHART_NAME}-${CHART_TAG}.tgz" oci://${<< parameters.artifact-registry-url >>}
+        cd -

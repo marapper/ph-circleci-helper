@@ -1,0 +1,31 @@
+# based on https://github.com/CircleCI-Public/gcp-cli-orb/blob/master/src/commands/initialize.yml
+description: >
+  Initializes the gcloud CLI and logs in to the Artifact registry.
+
+parameters:
+  gcloud-service-key:
+    type: env_var_name
+    default: GCLOUD_SERVICE_KEY
+    description: |
+      Name of environment variable storing the full service key JSON file for the Google project.
+
+  google-project-id:
+    type: env_var_name
+    default: DOCKER_REGISTRY_PROJECT
+    description: |
+      Name of environment variable storing the Google project ID to set as
+      default for the gcloud CLI.
+
+  google-compute-zone:
+    type: env_var_name
+    default: DOCKER_REGISTRY_ZONE
+    description: |
+      Name of the environment variable storing the Google compute zone to set as
+      default for the gcloud CLI.
+
+steps:
+  - auth:
+      artifact-registry-type: ""
+      google-compute-zone: << parameters.google-compute-zone >>
+      google-project-id: << parameters.google-project-id >>
+      gcloud-service-key: << parameters.gcloud-service-key >>

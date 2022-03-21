@@ -5,23 +5,8 @@ description: >
 parameters:
   gcloud-service-key:
     type: env_var_name
-    default: GCLOUD_SERVICE_KEY
     description: |
       Name of environment variable storing the full service key JSON file for the Google project.
-
-  google-project-id:
-    type: env_var_name
-    default: DOCKER_REGISTRY_PROJECT
-    description: |
-      Name of environment variable storing the Google project ID to set as
-      default for the gcloud CLI.
-
-  google-compute-zone:
-    type: env_var_name
-    default: DOCKER_REGISTRY_ZONE
-    description: |
-      Name of the environment variable storing the Google compute zone to set as
-      default for the gcloud CLI.
 
   gcloud-disable-prompts:
     type: boolean
@@ -30,20 +15,36 @@ parameters:
       True answer assumed for all user prompts. Will set CLOUDSDK_CORE_DISABLE_PROMPTS=1 which
       is helpful to avoid spamming --quiet and sometimes forgetting it
 
-  artifact-registry-auth:
-    type: boolean
-    default: true
+  google-project-id:
+    type: env_var_name
     description: |
-      Whether or not to authenticate to the artifact registry.
+      Name of environment variable storing the Google project ID to set as
+      default for the gcloud CLI.
+
+  google-compute-zone:
+    type: env_var_name
+    description: |
+      Name of the environment variable storing the Google compute zone to set as
+      default for the gcloud CLI.
 
   artifact-registry-region:
     type: env_var_name
-    default: DOCKER_REGISTRY_REGION
+    default: REGISTRY_REGION
     description: |
       Name of the environment variable storing the Artifact registry region e.g.
       us-central1-docker.pkg.dev, europe-west1-docker.pkg.dev.
 
       If no value is set for the environment variable, artifact registry authentication is skipped.
+
+  artifact-registry-type:
+    type: string
+    description: |
+      Type of artifact registry to authenticate, must be in:
+      - ""
+      - "docker"
+      - "helm"
+      - "npm" (to be implemented)
+      - "pip" (to be implemented)
 
 steps:
   - run:
@@ -69,14 +70,32 @@ steps:
         gcloud config set compute/zone ${<< parameters.google-compute-zone >>}
 
   - when:
-      condition: << parameters.artifact-registry-auth >>
+      condition:
+        and:
+        - equal: [ docker, << parameters.artifact-registry-type >> ]
       steps:
       - run:
-          name: Authenticate to the artifact registry
+          name: Authenticate to the docker registry
           command: |
-            # authenticate to the artifact registry
             if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
               echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
             else
               gcloud auth configure-docker ${<< parameters.artifact-registry-region >>}
             fi
+
+  - when:
+      condition:
+        and:
+        - equal: [ helm, << parameters.artifact-registry-type >> ]
+      steps:
+      - run:
+          name: Authenticate to the helm registry
+          command: |
+            if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
+              echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
+            else
+              export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/gcloud-service-key.json"
+              gcloud auth application-default print-access-token | helm registry login -u oauth2accesstoken \
+              --password-stdin ${<< parameters.artifact-registry-region >>}
+            fi
+

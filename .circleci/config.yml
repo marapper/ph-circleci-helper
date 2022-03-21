@@ -19,30 +19,40 @@ parameters:
     default: "dev:alpha"
 
 jobs:
-  integration-test-push:
+  helm-push:
+    docker:
+    - image: google/cloud-sdk:372.0.0-alpine
+    steps:
+    - checkout
+    - gcr/install-helm
+    - gcr/install-yq
+    - gcr/auth-helm
+    - gcr/push-helm:
+        path: .circleci/tests/helm
+
+  docker-push:
     docker:
       - image: google/cloud-sdk:372.0.0-alpine
     steps:
       - checkout
-      - gcr/auth
+      - gcr/auth-docker
       - gcr/install-docker-compose
       - setup_remote_docker:
           version: 20.10.7
       - run:
           name: Build image
           command: |
-            docker build -t documentation:latest .
-      - gcr/push:
+            docker build -t documentation:latest .circleci/tests
+      - gcr/push-docker:
           team: growth
           app: homepage
           source-tag: documentation:latest
 
-  integration-test-bump:
+  docker-bump:
     docker:
       - image: google/cloud-sdk:372.0.0-alpine
     steps:
-      - gcr/auth:
-          artifact-registry-auth: false
+      - gcr/auth-gcp
       - gcr/install-yq
       - gcr/bump:
           team: growth
@@ -78,12 +88,14 @@ workflows:
   integration-test_deploy:
     when: << pipeline.parameters.run-integration-tests >>
     jobs:
-      - integration-test-push:
+      - helm-push:
           context: landing-zone-root
-      - integration-test-bump:
+      - docker-push:
+          context: landing-zone-root
+      - docker-bump:
           context: landing-zone-root
           requires:
-          - integration-test-push
+          - docker-push
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major
@@ -97,7 +109,8 @@ workflows:
           fail-if-semver-not-indicated: true
           publish-version-tag: false
           requires:
-            - integration-test-bump
+            - docker-bump
+            - helm-push
           filters:
             branches:
               only:

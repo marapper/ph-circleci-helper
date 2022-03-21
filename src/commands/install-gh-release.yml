@@ -10,6 +10,11 @@ parameters:
     type: string
     description: |
       SHA256 checksum of the binary.
+  archive-path:
+    type: string
+    default: ""
+    description: |
+      Binary path within the archive.
   binary-name:
     type: string
     description: |
@@ -22,14 +27,28 @@ steps:
         if command -v << parameters.binary-name >> >/dev/null; then
           echo "<< parameters.binary-name >> installation already found, skipping..."
         else
+          url="<< parameters.url >>"
+          extension="${url##*.}"
+          echo "Downloading <<parameters.url>>"
+
           curl -q << parameters.url >> -L -o << parameters.binary-name >>
           CHECKSUM=$(sha256sum << parameters.binary-name >> | awk '{ print $1 }')
+
           if [[ $CHECKSUM == "<< parameters.checksum >>" ]]; then
-            chmod +x << parameters.binary-name >>
-            mv << parameters.binary-name >> /bin/<< parameters.binary-name >>
+            OUTPUT_PATH=<< parameters.binary-name >>
+
+            case $extension in
+              tar | gz)
+                OUTPUT_PATH=<< parameters.archive-path >>
+                tar -xvzf << parameters.binary-name >> $OUTPUT_PATH
+              ;;
+            esac
+
+            chmod +x $OUTPUT_PATH
+            mv $OUTPUT_PATH /bin/<< parameters.binary-name >>
             echo "<< parameters.binary-name >> installed successfully"
           else
-            echo "<< parameters.binary-name >> binary checksum failed"
+            echo "<< parameters.binary-name >> checksum failed, got $CHECKSUM"
             exit 1
           fi
         fi

@@ -1,0 +1,9 @@
+description: >
+  Installs an OCI compatible helm release
+
+steps:
+  - install-gh-release:
+      binary-name: helm
+      url: https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz
+      checksum: 8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b
+      archive-path: linux-amd64/helm
