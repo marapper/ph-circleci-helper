@@ -30,7 +30,7 @@ steps:
         # storing semantic versions, Helm adopts the convention of changing plus (+) to
         # an underscore (_) in chart version tags when pushing to a registry and back to
         # a plus (+) when pulling from a registry
-        CHART_TAG="${CHART_VERSION}+${CIRCLE_SHA1:1:5}.${CIRCLE_BUILD_NUM}"
+        CHART_TAG="${CHART_VERSION}+${CIRCLE_SHA1:1:5}.${CIRCLE_WORKFLOW_ID}"
         helm package --version="${CHART_TAG}" .
 
         helm push "${CHART_NAME}-${CHART_TAG}.tgz" oci://${<< parameters.artifact-registry-url >>}
