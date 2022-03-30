@@ -1,0 +1,22 @@
+description: >
+  Tag and existing docker image and pushes it to the registry
+
+parameters:
+  artifact-registry-url:
+    type: env_var_name
+    default: PIP_REGISTRY_URL
+    description: |
+      Name of environment variable storing the docker artifact registry url in the
+      <region>-python.pkg.dev/<project_id>/<registry_id> format
+
+  path:
+    type: string
+    description: |
+      Path to the chart, will be used to run `helm package PATH`
+
+steps:
+  - run:
+      name: Publish pip package
+      command: |
+        export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/gcloud-service-key.json"
+        twine upload --repository-url ${<< parameters.artifact-registry-url >>} << parameters.path >>/*
