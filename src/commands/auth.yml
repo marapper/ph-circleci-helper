@@ -54,16 +54,16 @@ steps:
           export CLOUDSDK_CORE_DISABLE_PROMPTS=1
         fi
 
+        # disable analytics
+        gcloud config set core/disable_usage_reporting true
+        gcloud config set core/disable_file_logging true
+        gcloud config set component_manager/disable_update_check true
+
         # https://cloud.google.com/sdk/gcloud/reference/secrets/versions/access
         # gcloud secrets outputs (which are put in the circleCI context) is formatted as UTF-8 which can corrupt binary secrets
         # thus, we base64 encode the value and then trim '_-/+' and then decode it
         echo ${<< parameters.gcloud-service-key >>} | tr '_-' '/+' | base64 -d > ${HOME}/gcloud-service-key.json
         gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
-
-        # disable analytics
-        gcloud config set core/disable_usage_reporting true
-        gcloud config set core/disable_file_logging true
-        gcloud config set component_manager/disable_update_check true
 
         # configure project and region
         gcloud config set project ${<< parameters.google-project-id >>}
