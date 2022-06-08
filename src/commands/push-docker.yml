@@ -39,7 +39,9 @@ steps:
         if [[ -z "<< parameters.tag >>" ]]; then
           IMAGE_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
         else
-          IMAGE_TAG="<< parameters.tag >>"
+          NON_NORMALIZED_IMAGE_TAG="<< parameters.tag >>"
+          # replaces all / with _ (https://tldp.org/LDP/abs/html/string-manipulation.html)
+          IMAGE_TAG=${NON_NORMALIZED_IMAGE_TAG//\//_}
         fi
 
         IMAGE="${IMAGE_FULL_PATH}:${IMAGE_TAG}"
