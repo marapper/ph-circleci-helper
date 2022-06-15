@@ -1,0 +1,52 @@
+description: >
+  Tag and existing docker image and pushes it to the registry
+
+parameters:
+  argocd-url:
+    type: string
+    default: argocd-server.argocd.svc.cluster.local
+    description: |
+      URL of the argocd server (either incluster kubernetes service or domain)
+
+  env:
+    type: string
+    description: |
+      Environment of the application to sync.
+
+  team:
+    type: string
+    description: |
+      Team which owns the application to sync
+
+  app:
+    type: string
+    description: |
+      Name of the application to sync. Defaults to the following format:
+      {env}-{team}-{app}
+
+  argocd-app-name:
+    type: string
+    default: ""
+    description: |
+      Name of the ArgoCD application to sync. If defined, overwrites the combined
+      name {env}-{team}-{app}
+
+steps:
+  - run:
+      name: Install prerequisite
+      command: |
+        wget -qO argocd <<parameters.argocd-url>>/download/argocd-linux-amd64
+        chmod +x argocd
+
+  - run:
+      name: Argocd sync
+      command: |
+        APP_NAME="<<parameters.argocd-app-name>>"
+        if [[ -z $APP_NAME ]]; then
+          APP_NAME="<<parameters.env>>-<<parameters.team>>"
+        fi
+
+        ./argocd app sync $APP_NAME \
+          --plaintext \
+          --auth-token $ARGOCD_AUTH_TOKEN \
+          --server <<parameters.argocd-url>>

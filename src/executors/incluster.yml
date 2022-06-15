@@ -1,0 +1,10 @@
+description: >
+  Private circleci runner in the GKE cluster.
+
+machine: true
+resource_class: '<< parameters.resource_class >>'
+
+parameters:
+  resource_class:
+    type: string
+    default: "pricehubble/incluster"
