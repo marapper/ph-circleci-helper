@@ -64,6 +64,12 @@ parameters:
     description: |
       Tag of the image-built. If not given, defaults to '${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}'
 
+  push:
+    type: boolean
+    default: true
+    description: |
+      Whether or not to push the commit
+
 steps:
   - run:
       name: Fetch and decode SSH key
@@ -88,8 +94,14 @@ steps:
       name: Clone repo and bump version
       command: |
         export GIT_SSH_COMMAND='ssh -i ~/.ssh/id_releaser -o IdentitiesOnly=yes'
-        git clone --single-branch --branch << parameters.releaser-branch >> \
-          --quiet git@bitbucket.org:pricehubble/<< parameters.releaser-repo >>.git
+
+        # Only clone repo if the git repo does not already exist
+        if [ ! -d "<< parameters.releaser-repo >>" ]; then
+          git clone --single-branch --branch << parameters.releaser-branch >> \
+            --quiet git@bitbucket.org:pricehubble/<< parameters.releaser-repo >>.git
+        else
+          git -C << parameters.releaser-repo >> pull
+        fi
 
         IMAGE_FULL_PATH="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>"
         if [[ -z "<< parameters.tag >>" ]]; then
@@ -130,4 +142,13 @@ steps:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
           commit_sha: ${CIRCLE_SHA1}
         EOF
-        git push --force --set-upstream origin << parameters.releaser-branch >>
+
+  - when:
+      condition: <<parameters.push>>
+      steps:
+      - run:
+          name: Push changes
+          command: |
+            cd << parameters.releaser-repo >>
+            export GIT_SSH_COMMAND='ssh -i ~/.ssh/id_releaser -o IdentitiesOnly=yes'
+            git push --force --set-upstream origin << parameters.releaser-branch >>

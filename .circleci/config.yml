@@ -60,6 +60,15 @@ jobs:
           env: predev
           releaser-repo: ph-releaser
           releaser-branch: sre/landing-zone
+          push: false
+
+      - gcr/bump:
+          team: growth
+          app: homepage
+          env: dev
+          releaser-repo: ph-releaser
+          releaser-branch: sre/landing-zone
+          push: true
 
 workflows:
   test-pack:

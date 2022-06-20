@@ -1,58 +1,145 @@
 # CircleCI helper orb
 
-This orb is destined to simplify common CICD operations in the landing zone (e.g. authenticating to the artifact registry, pushing and pulling images from it, bumping image tags in `ph-k8s-releaser`).
+[Orbs](https://circleci.com/docs/2.0/orb-intro/) are reusable snippets of code for CircleCI pipeline definition. This orb is destined to simplify common CICD operations in the landing zone (e.g. authenticating to the artifact registry, pushing and pulling images from it, bumping image tags in `ph-releaser`). 
 
-## References
 
-- [CircleCI Orb Authoring guide](https://circleci.com/docs/2.0/orb-intro/#section=configuration) 
-- [GCP CLI Orb](https://github.com/CircleCI-Public/gcp-cli-orb/blob/master/src/commands/initialize.yml) used as a reference 
-- [Yaml Lint reference](https://yamllint.readthedocs.io/en/latest/) for dealing with the CI 
+# Getting started
 
-### Repo structure
+Adding following snippets in your repo's `.circleci/config.yml` will get you up and going faster with implementing your CICD pipelines.
+First the orb must be included with:
 
-```
-.
-├── CHANGELOG.md                # changelog to be updated manually on release
-├── Dockerfile                  # dockerfile used for integration testing
-├── LICENSE                     
-├── README.md                   
-└── src
-    ├── @orb.yml                # Chart.yaml equivalent for orbs
-    ├── commands                # Contains commands (https://circleci.com/docs/2.0/configuration-reference/#commands-requires-version-21)
-    │   ├── auth.yml            #   commands are named after the file name, auth.yml => ph-circleci-helper/auth
-    │   ├── bump.yaml
-    │   ├── install-yq.yml
-    │   └── push.yml
-    ├── examples                # Examples to be displayed on the orb registry (does not apply for private registries)
-    ├── executors               # Contains executors (https://circleci.com/docs/2.0/configuration-reference/#executors-requires-version-21)
-    │   └── cloud-sdk.yml       #   executors can be called with the file name, cloud-sdk.yml => ph-circleci-helper/cloud-sdk
-    ├── jobs                    # Contains parametrized jobs (https://circleci.com/docs/2.0/configuration-reference/#jobs)
-    ├── scripts                 # Contains shell scripts (useful for longer bash scripts and shellcheck) 
-    └── tests                   # Contains BATS unit tests
+```yaml
+version: 2.1
+
+orbs:
+  # "ph" here is the namespace of the functions imported. To call commands (like a function but for circleci pipelines),
+  # you'd then need to use `ph/<command_name>`
+  ph: pricehubble/ph-circleci-helper@0.1.3
 ```
 
-### Local development guide
+From then on, you can call any commands that are included in the orb. The full list of commands are visible in [src/commands](./src/commands).
 
-- Checkout the `alpha` branch 
-- Pack the orb (groups yaml files in `src/` into a single yaml) with `circleci orb pack src/ > orb.yml` 
-- Validate the orb with `circleci config validate --org-slug bitbucket/pricehubble orb.yml` 
-- Commit changes which will lint the chart, publish it with a dev tag and then run integration tests defined in `.circle/config.yml` 
+---
 
-### How to Publish
+## Authenticate
 
-* Create and push a branch with your new features.
-* When ready to publish a new production version, create a Pull Request from _feature branch_ to `main`.
-* The title of the pull request must contain a special semver tag: `[semver:<segment>]` where `<segment>` is replaced by one of the following values.
+The orbs contains the following set of authentication functions:
 
-| Increment | Description|
-| ----------| -----------|
-| major     | Issue a 1.0.0 incremented release|
-| minor     | Issue a x.1.0 incremented release|
-| patch     | Issue a x.x.1 incremented release|
-| skip      | Do not issue a release|
+| Command       | Target                   |
+|---------------|--------------------------|
+| `auth-gcp`    | GCP project              |
+| `auth-docker` | docker artifact registry |
+| `auth-helm`   | helm artifact registry   |
+| `auth-python` | pip artifact registry    |
 
-Example: `[semver:major]`
+These will however require some secrets, which are only accessible in the `landing-zone-root` context.  For example, to authenticate to the docker registry:
 
-* Squash and merge. Ensure the semver tag is preserved and entered as a part of the commit message.
-* On merge, after manual approval, the orb will automatically be published to the Orb Registry.
+```yaml
+version: 2.1
 
+orbs:
+  ph: pricehubble/ph-circleci-helper@0.1.3
+
+jobs:
+  build:
+    steps:
+    - ph/auth-docker
+
+workflows:
+  build_deploy:
+    jobs:
+    - build:
+        context: landing-zone-root
+```
+
+All commands come with a set of reasonable defaults that are extracted from appropriate circleci context but all parameters are customizable which can be found in the `parameters` section of each command's definition (see [src/commands/auth-docker](./src/commands/auth-docker.yml)).
+
+---
+## Install prerequisites
+
+To simplify some operations, the orb also comes with some installation helpers:
+
+| Command                  | Target                                     |
+|--------------------------|--------------------------------------------|
+| `install-yq`             | https://github.com/mikefarah/yq            |
+| `install-docker-compose` | https://github.com/docker/compose/releases |
+| `install-helm`           | https://github.com/helm/helm/releases      |
+
+---
+## Build and publish docker images
+
+```yaml
+version: 2.1
+
+orbs:
+  ph: pricehubble/ph-circleci-helper@0.1.3
+
+jobs:
+  build:
+    executor: ph/cloud-sdk
+    parameters:
+      app:
+        type: string
+      team:
+        type: string
+    steps:
+    - checkout
+    - ph/auth-docker
+    - setup_remote_docker:
+        version: 20.10.7
+        docker_layer_caching: true
+    - run:
+        name: Build docker Image
+        command: docker build --progress=plain -t launchpad .
+    - ph/push-docker:
+        team: << parameters.team >>
+        app: << parameters.app >>
+        source-tag: launchpad:latest
+
+workflows:
+  build_deploy:
+    jobs:
+    - build:
+        context: landing-zone-root
+        team: growth
+        app: launchpad
+```
+
+---
+
+## Build and publish pip packages
+
+```yaml
+version: 2.1
+
+orbs:
+  ph: pricehubble/ph-circleci-helper@0.1.4
+
+jobs:
+  publish_pip:
+    executor: ph/cloud-sdk
+    steps:
+    - checkout
+    - ph/auth-python
+    - run:
+        name: Build package
+        command: |
+          git config --global user.email "ping@pong.com"
+          git config --global user.name "Anonymous"
+          apt-get install -y python3-venv
+
+          pip install \
+            build \
+            coverage \
+            twine
+          python3 setup.py install
+          python3 -m build
+    - ph/push-python:
+        path: /root/project/dist
+
+workflows:
+  build_deploy:
+    jobs:
+    - publish_pip:
+        context: landing-zone-root
+```
