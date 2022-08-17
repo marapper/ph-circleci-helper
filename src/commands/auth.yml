@@ -15,17 +15,41 @@ parameters:
       True answer assumed for all user prompts. Will set CLOUDSDK_CORE_DISABLE_PROMPTS=1 which
       is helpful to avoid spamming --quiet and sometimes forgetting it
 
+  google-project-number:
+    type: env_var_name
+    description: |
+      Name of environment variable storing the Google project numeric ID to set as
+      default for the gcloud CLI.
+
   google-project-id:
     type: env_var_name
     description: |
-      Name of environment variable storing the Google project ID to set as
-      default for the gcloud CLI.
+      Name of environment variable storing the Google project ID be used
+      in generating the workload identity audience.
+
+  google-service-account:
+    type: env_var_name
+    description: |
+      Name of environment variable storing the Google service account to be impersonated
+      by the CircleCI job.
 
   google-compute-zone:
     type: env_var_name
     description: |
       Name of the environment variable storing the Google compute zone to set as
       default for the gcloud CLI.
+
+  google-workload-identity-pool-id:
+    type: env_var_name
+    description: |
+      Name of environment variable storing the Google workload identity pool id
+      to be bound to the circleci job.
+
+  google-workload-identity-pool-provider-id:
+    type: env_var_name
+    description: |
+      Name of environment variable storing the Google workload identity provider pool id
+      to be bound to the circleci job.
 
   artifact-registry-region:
     type: env_var_name
@@ -46,6 +70,10 @@ parameters:
       - "npm" (to be implemented)
       - "pip" (to be implemented)
 
+  oidc-token-file-path:
+    type: string
+    default: $HOME/oidc_token.json
+
 steps:
   - run:
       name: Initialize gcloud
@@ -59,11 +87,14 @@ steps:
         gcloud config set core/disable_file_logging true
         gcloud config set component_manager/disable_update_check true
 
-        # https://cloud.google.com/sdk/gcloud/reference/secrets/versions/access
-        # gcloud secrets outputs (which are put in the circleCI context) is formatted as UTF-8 which can corrupt binary secrets
-        # thus, we base64 encode the value and then trim '_-/+' and then decode it
-        echo ${<< parameters.gcloud-service-key >>} | tr '_-' '/+' | base64 -d > ${HOME}/gcloud-service-key.json
-        gcloud auth activate-service-account --key-file=${HOME}/gcloud-service-key.json
+        echo $CIRCLE_OIDC_TOKEN > << parameters.oidc-token-file-path >>
+        # Create a credential configuration for the generated OIDC ID Token
+        gcloud iam workload-identity-pools create-cred-config \
+            "projects/${<< parameters.google-project-number >>}/locations/global/workloadIdentityPools/${<< parameters.google-workload-identity-pool-id >>}/providers/${<< parameters.google-workload-identity-pool-provider-id >>}"\
+            --output-file="${HOME}/gcloud-service-key.json" \
+            --service-account="${<< parameters.google-service-account >>}" \
+            --credential-source-file=<< parameters.oidc-token-file-path >>
+        gcloud auth login --brief --cred-file "${HOME}/gcloud-service-key.json"
 
         # configure project and region
         gcloud config set project ${<< parameters.google-project-id >>}
