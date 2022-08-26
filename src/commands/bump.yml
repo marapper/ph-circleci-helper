@@ -131,7 +131,7 @@ steps:
         git config --global user.name 'Bumper'
         git config --global user.email 'bumper@pricehubble.com'
         git commit -a -F- \<<EOF
-          Bumped << parameters.team >>/<< parameters.app >>/<< parameters.env >> to ${IMAGE_TAG}
+          [skip ci] Bumped << parameters.team >>/<< parameters.app >>/<< parameters.env >> to ${IMAGE_TAG}
 
           team: << parameters.team >>
           application: << parameters.app >>
