@@ -145,8 +145,8 @@ steps:
             fi
 
             pip install \
-              keyring \
-              keyrings.google-artifactregistry-auth
+              keyring==23.8.2 \
+              keyrings.google-artifactregistry-auth==1.0.0
 
             cat \<<EOF > "${HOME}/.pypirc"
             [distutils]
