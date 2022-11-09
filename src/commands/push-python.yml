@@ -18,5 +18,4 @@ steps:
   - run:
       name: Publish pip package
       command: |
-        export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/gcloud-service-key.json"
-        twine upload --repository-url ${<< parameters.artifact-registry-url >>} << parameters.path >>/*
+        twine upload --verbose --repository-url ${<< parameters.artifact-registry-url >>} << parameters.path >>/*
