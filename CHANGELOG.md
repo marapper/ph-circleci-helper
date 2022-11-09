@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.1] - 2022-11-09
+ - Removes unused GOOGLE_APPLICATION_CREDENTIALS for the `push-python` step
+
 ## [0.3.0] - 2022-09-28
  - Implement nodeJS artifact registry authentication [SRE-1088](https://pricehubble.atlassian.net/browse/SRE-1088)
 
