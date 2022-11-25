@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.2] - 2022-11-25
+ - [SRE-1337](https://pricehubble.atlassian.net/browse/SRE-1337) Fix intermittent failures for the bump step 
+
 ## [0.3.1] - 2022-11-09
  - Removes unused GOOGLE_APPLICATION_CREDENTIALS for the `push-python` step
 
