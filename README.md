@@ -14,10 +14,66 @@ version: 2.1
 orbs:
   # "ph" here is the namespace of the functions imported. To call commands (like a function but for circleci pipelines),
   # you'd then need to use `ph/<command_name>`
-  ph: pricehubble/ph-circleci-helper@0.1.3
+  ph: pricehubble/ph-circleci-helper@0.3.2
 ```
 
 From then on, you can call any commands that are included in the orb. The full list of commands are visible in [src/commands](./src/commands).
+
+
+---
+
+## Bump
+
+The bump step allows the CircleCI step to change the image tag in the [ph-releaser](https://bitbucket.org/pricehubble/ph-releaser/src/master/) repository. This change will then be picked up by Argocd and deployed (see [linking circleci with argocd](https://pricehubble.atlassian.net/l/cp/e9Jk002Z) for a more detailed view of the interaction).
+
+```yaml
+version: 2.1
+
+orbs:
+  ph: pricehubble/ph-circleci-helper@0.3.2
+
+jobs:
+  build:
+    steps:
+    # Installs yq which is required by the step
+    - ph/install-yq
+
+    # Bump can be called in many ways
+    #
+    # 1. With all defaults. 
+    # The following step will change in ph-releaser the "apps/<< parameters.app >>/<< parameters.env >>/values.yaml" file
+    # In that yaml file, the ".image.tag" value will be set to the '${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}' value.
+    - ph/bump:
+        team: geoinsights
+        app: neighbourhood
+        env: predev
+
+    # 2. Specify value files and yaml path inside the file
+    # The following step will change in ph-releaser the "apps/<< parameters.app >>/<< parameters.env >>/values.lz.yaml" file
+    # In that yaml file, the ".neighbourhood.image.tag" value will be set to the '${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}' value.
+    - ph/bump:
+        team: geoinsights
+        app: neighbourhood
+        env: predev
+        value-file: apps/<< parameters.app >>/<< parameters.env >>/values.lz.yaml
+        value-tag-referenc: .neighbourhood.image.tag
+
+    # 3. Specify the image tag to be changed
+    # The following step will change in ph-releaser the "apps/<< parameters.app >>/<< parameters.env >>/values.yaml" file
+    # In that yaml file, the ".image.tag" value will be set to the ${CIRCLE_SHA1} (commit sha) value.
+    - ph/bump:
+        team: geoinsights
+        app: neighbourhood
+        env: predev 
+        tag: << pipeline.git.revision >>
+
+workflows:
+  build_deploy:
+    jobs:
+    - build:
+        # required as it contains the SSH key with which circleci authenticates to bitbucket
+        context: landing-zone-root
+```
 
 ---
 
@@ -38,7 +94,7 @@ These will however require some secrets, which are only accessible in the `landi
 version: 2.1
 
 orbs:
-  ph: pricehubble/ph-circleci-helper@0.1.3
+  ph: pricehubble/ph-circleci-helper@0.3.2
 
 jobs:
   build:
@@ -72,7 +128,7 @@ To simplify some operations, the orb also comes with some installation helpers:
 version: 2.1
 
 orbs:
-  ph: pricehubble/ph-circleci-helper@0.1.3
+  ph: pricehubble/ph-circleci-helper@0.3.2
 
 jobs:
   build:
