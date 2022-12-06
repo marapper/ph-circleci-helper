@@ -125,25 +125,32 @@ steps:
         echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_TAG\" in ${VALUE_FILE}"
         yq e "<< parameters.value-tag-reference >> = \"$IMAGE_TAG\"" -i ${VALUE_FILE}
 
-        git add .
-        git config --global user.name 'Bumper'
-        git config --global user.email 'bumper@pricehubble.com'
-        git commit -a -F- \<<EOF
-          [skip ci] Bumped << parameters.team >>/<< parameters.app >>/<< parameters.env >> to ${IMAGE_TAG}
+        # Detects whether or not a diff occurred
+        # https://git-scm.com/docs/git-status#Documentation/git-status.txt---porcelainltversiongt
+        if [ -z "$(git status --porcelain)" ]; then
+          git add .
+          git config --global user.name 'Bumper'
+          git config --global user.email 'bumper@pricehubble.com'
+          git commit -a -F- \<<-EOF
+            [skip ci] Bumped << parameters.team >>/<< parameters.app >>/<< parameters.env >> to ${IMAGE_TAG}
 
-          team: << parameters.team >>
-          application: << parameters.app >>
-          environment: << parameters.env >>
-          image_tag: ${IMAGE_TAG}
-          image_url: ${IMAGE_FULL_PATH}
-          build_number: ${CIRCLE_BUILD_NUM}
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
-          commit_sha: ${CIRCLE_SHA1}
+            team: << parameters.team >>
+            application: << parameters.app >>
+            environment: << parameters.env >>
+            image_tag: ${IMAGE_TAG}
+            image_url: ${IMAGE_FULL_PATH}
+            build_number: ${CIRCLE_BUILD_NUM}
+            workflow_id: ${CIRCLE_WORKFLOW_ID}
+            commit_sha: ${CIRCLE_SHA1}
         EOF
 
-        # Show local head commit body for easier debugging
-        # https://git-scm.com/docs/git-show
-        git -P show -s --format=%B HEAD
+          # Show local head commit body for easier debugging
+          # https://git-scm.com/docs/git-show
+          git -P show -s --format=%B HEAD
+        else
+          echo "No changes detected, not committing anything..."
+        fi
+
   - when:
       condition: <<parameters.push>>
       steps:
@@ -155,6 +162,8 @@ steps:
             # git pull here ensures that no changes occurred in between the initial pull and the push
             # git push --force-with-lease refuses to update a remote ref that is not an ancestor of the local ref used to overwrite it
             # which a second safety mechanism to avoid unintentionally overwriting changes
+            #
+            # NOTE: git push exits 0 even if no changes occurred
             git pull && \
               git push --force-with-lease --set-upstream origin << parameters.releaser-branch >>
 
