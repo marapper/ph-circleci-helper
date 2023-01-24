@@ -126,8 +126,8 @@ steps:
         yq e "<< parameters.value-tag-reference >> = \"$IMAGE_TAG\"" -i ${VALUE_FILE}
 
         # Detects whether or not a diff occurred
-        # https://git-scm.com/docs/git-status#Documentation/git-status.txt---porcelainltversiongt
-        if [ -z "$(git status --porcelain)" ]; then
+        # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---exit-code
+        if ! git diff --exit-code  --quiet HEAD; then
           git add .
           git config --global user.name 'Bumper'
           git config --global user.email 'bumper@pricehubble.com'
