@@ -1,5 +1,8 @@
 description: >
-  Tag and existing docker image and pushes it to the registry
+  Runs `argocd sync` for a given application. 
+  
+  This command is ONLY intended to run in an incluster self hosted k8s circleci runner who 
+  has internal access to the argocd API.
 
 parameters:
   argocd-url:

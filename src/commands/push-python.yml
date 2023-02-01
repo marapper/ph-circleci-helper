@@ -1,5 +1,5 @@
 description: >
-  Tag and existing docker image and pushes it to the registry
+  Uploads an existing pip package and pushes it to the registry
 
 parameters:
   artifact-registry-url:
@@ -12,7 +12,7 @@ parameters:
   path:
     type: string
     description: |
-      Path to the chart, will be used to run `helm package PATH`
+      Path to the pip package, will be used to run `twine upload`
 
 steps:
   - run:

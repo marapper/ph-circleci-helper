@@ -1,5 +1,5 @@
 description: >
-  Tag and existing docker image and pushes it to the registry
+  Tags and packages a helm chart and pushes it to the registry
 
 parameters:
   artifact-registry-url:

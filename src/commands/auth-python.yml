@@ -2,12 +2,6 @@ description: >
   Initializes the gcloud CLI and logs in to the Helm registry.
 
 parameters:
-  gcloud-service-key:
-    type: env_var_name
-    default: GCLOUD_SERVICE_KEY
-    description: |
-      Name of environment variable storing the full service key JSON file for the Google project.
-
   gcloud-disable-prompts:
     type: boolean
     default: true
@@ -68,7 +62,6 @@ parameters:
 
 steps:
   - auth:
-      artifact-registry-type: pip
       artifact-registry-region: << parameters.artifact-registry-region >>
       google-compute-zone: << parameters.google-compute-zone >>
       google-project-id: << parameters.google-project-id >>
@@ -76,4 +69,31 @@ steps:
       google-service-account: << parameters.google-service-account >>
       google-workload-identity-pool-id: << parameters.google-workload-identity-pool-id >>
       google-workload-identity-pool-provider-id: << parameters.google-workload-identity-pool-provider-id >>
-      gcloud-service-key: << parameters.gcloud-service-key >>
+
+  - run:
+      name: Authenticate to the pip registry
+      command: |
+        # https://cloud.google.com/artifact-registry/docs/python/authentication#sa-key
+        if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
+          echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
+          exit 0
+        fi
+
+        pip install \
+          keyring==23.8.2 \
+          keyrings.google-artifactregistry-auth==1.0.0
+
+        cat \<<EOF > "${HOME}/.pypirc"
+        [distutils]
+        index-servers =
+          gcp
+
+        [gcp]
+        repository: https://${<< parameters.artifact-registry-region >>}-python.pkg.dev/${<< parameters.google-project-id >>}/pip
+        EOF
+
+        mkdir -p ~/.pip/
+        cat \<<EOF > "${HOME}/.pip/pip.conf"
+        [global]
+        extra-index-url = https://${<< parameters.artifact-registry-region >>}-python.pkg.dev/${<< parameters.google-project-id >>}/pip/simple/
+        EOF

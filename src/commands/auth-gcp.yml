@@ -3,12 +3,6 @@ description: >
   Initializes the gcloud CLI and logs in to the Artifact registry.
 
 parameters:
-  gcloud-service-key:
-    type: env_var_name
-    default: GCLOUD_SERVICE_KEY
-    description: |
-      Name of environment variable storing the full service key JSON file for the Google project.
-
   google-project-number:
     type: env_var_name
     default: GOOGLE_PROJECT_NUMBER
@@ -52,11 +46,9 @@ parameters:
       to be bound to the circleci job.
 steps:
   - auth:
-      artifact-registry-type: ""
       google-compute-zone: << parameters.google-compute-zone >>
       google-project-id: << parameters.google-project-id >>
       google-project-number: << parameters.google-project-number >>
       google-service-account: << parameters.google-service-account >>
       google-workload-identity-pool-id: << parameters.google-workload-identity-pool-id >>
       google-workload-identity-pool-provider-id: << parameters.google-workload-identity-pool-provider-id >>
-      gcloud-service-key: << parameters.gcloud-service-key >>

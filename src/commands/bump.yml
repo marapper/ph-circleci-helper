@@ -1,6 +1,9 @@
 description: >
   Bumps the version of a given application in ph-releaser.
 
+  This command uses `yq` to change a specific field in the yaml file and then git to 
+  push said changes to a releaser-repo (e.g. ph-releaser)
+
 parameters:
   releaser-repo:
     type: string

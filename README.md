@@ -2,6 +2,7 @@
 
 [Orbs](https://circleci.com/docs/2.0/orb-intro/) are reusable snippets of code for CircleCI pipeline definition. This orb is destined to simplify common CICD operations in the landing zone (e.g. authenticating to the artifact registry, pushing and pulling images from it, bumping image tags in `ph-releaser`). 
 
+For a more visual documentation see [private orb registry](https://circleci.com/developer/orbs/orb/pricehubble/ph-circleci-helper)
 
 # Getting started
 
@@ -14,7 +15,12 @@ version: 2.1
 orbs:
   # "ph" here is the namespace of the functions imported. To call commands (like a function but for circleci pipelines),
   # you'd then need to use `ph/<command_name>`
-  ph: pricehubble/ph-circleci-helper@0.3.2
+
+  # You can specify the patch version 
+  ph: pricehubble/ph-circleci-helper@0.3.1
+
+  # or ideally just pin it to a minor version to get all the patch updates
+  ph: pricehubble/ph-circleci-helper@0.3
 ```
 
 From then on, you can call any commands that are included in the orb. The full list of commands are visible in [src/commands](./src/commands).
@@ -94,7 +100,7 @@ These will however require some secrets, which are only accessible in the `landi
 version: 2.1
 
 orbs:
-  ph: pricehubble/ph-circleci-helper@0.3.2
+  ph: pricehubble/ph-circleci-helper@0.3
 
 jobs:
   build:
@@ -128,7 +134,7 @@ To simplify some operations, the orb also comes with some installation helpers:
 version: 2.1
 
 orbs:
-  ph: pricehubble/ph-circleci-helper@0.3.2
+  ph: pricehubble/ph-circleci-helper@0.3
 
 jobs:
   build:
@@ -169,7 +175,7 @@ workflows:
 version: 2.1
 
 orbs:
-  ph: pricehubble/ph-circleci-helper@0.1.4
+  ph: pricehubble/ph-circleci-helper@0.3
 
 jobs:
   publish_pip:

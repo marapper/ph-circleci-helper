@@ -1,9 +1,8 @@
 version: 2.1
 
 orbs:
-  gcr: pricehubble/ph-circleci-helper@<<pipeline.parameters.dev-orb-version>>
-  orb-tools: circleci/orb-tools@10.0
-  bats: circleci/bats@1.0
+  ph: pricehubble/ph-circleci-helper@<<pipeline.parameters.dev-orb-version>>
+  orb-tools: circleci/orb-tools@10.1.0
 
 parameters:
   run-integration-tests:
@@ -18,70 +17,123 @@ parameters:
     type: string
     default: "dev:alpha"
 
+  releaser-branch:
+    description: releaser repo branch to be used for integration tests.
+    type: string
+    default: circleci/integration-tests 
+  releaser-repo:
+    description: releaser repo to be used for integration tests.
+    type: string
+    default: ph-releaser
+
 jobs:
-  helm-push:
-    docker:
-    - image: google/cloud-sdk:372.0.0-alpine
+  helm:
+    executor: ph/cloud-sdk
     steps:
     - checkout
-    - gcr/install-helm
-    - gcr/install-yq
-    - gcr/auth-helm
-    - gcr/push-helm:
+    - ph/install-helm
+    - ph/install-yq
+    - ph/auth-helm
+    - ph/push-helm:
         path: .circleci/tests/helm
-
-  docker-push:
-    docker:
-      - image: google/cloud-sdk:372.0.0-alpine
+    - run:
+        name: Check if the tag is present in the registry
+        command: |
+          CHART_VERSION=$(yq e '.version' .circleci/tests/helm/Chart.yaml)
+          CHART_NAME=$(yq e '.name' .circleci/tests/helm/Chart.yaml)
+          
+          gcloud artifacts docker tags list \
+            --filter="tag:$CHART_VERSION" \
+            europe-west1-docker.pkg.dev/prj-ops-artifact-registry-707c/helm/$CHART_NAME | grep $CHART_VERSION
+  
+  docker:
+    executor: ph/cloud-sdk
+    parameters:
+      app:
+        type: string
+        default: circleci-orb-integration-test
+      team:
+        type: string
+        default: sre 
     steps:
       - checkout
-      - gcr/auth-docker
-      - gcr/install-docker-compose
+      - ph/auth-docker
+      - ph/install-docker-compose
       - setup_remote_docker:
           version: 20.10.7
       - run:
           name: Build image
           command: |
-            docker build -t documentation:latest .circleci/tests
-      - gcr/push-docker:
-          team: growth
-          app: homepage
-          source-tag: documentation:latest
-
-  docker-bump:
-    docker:
-      - image: google/cloud-sdk:372.0.0-alpine
+            docker build -t <<parameters.app>>:latest .circleci/tests/docker
+      - ph/push-docker:
+          team: <<parameters.team>>
+          app: <<parameters.app>>
+          source-tag: <<parameters.app>>:latest
+      - run:
+          name: Check if the tag is present in the registry
+          command: |
+            TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
+            gcloud artifacts docker tags list \
+              --filter="tag:$TAG" \
+              europe-west1-docker.pkg.dev/prj-ops-artifact-registry-707c/container/<<parameters.team>>/<<parameters.app>> | grep $TAG
+  bump:
+    executor: ph/cloud-sdk
+    parameters:
+      app:
+        type: string
+        default: circleci-orb-integration-test
+      team:
+        type: string
+        default: sre 
     steps:
-      - gcr/auth-gcp
-      - gcr/install-yq
-      - gcr/bump:
-          team: growth
-          app: homepage
+      - ph/auth-gcp
+      - ph/install-yq
+      - ph/bump:
+          team: <<parameters.team>>
+          app: <<parameters.app>>
           env: predev
-          releaser-repo: ph-releaser
-          releaser-branch: sre/landing-zone
+          releaser-repo: <<pipeline.parameters.releaser-repo>>
+          releaser-branch: <<pipeline.parameters.releaser-branch>>
           push: false
 
-      - gcr/bump:
-          team: growth
-          app: homepage
+      - ph/bump:
+          team: <<parameters.team>>
+          app: <<parameters.app>>
           env: dev
-          releaser-repo: ph-releaser
-          releaser-branch: sre/landing-zone
+          releaser-repo: <<pipeline.parameters.releaser-repo>>
+          releaser-branch: <<pipeline.parameters.releaser-branch>>
           push: true
+
+      - run:
+          name: Pull the releaser repo and check if the changes are present
+          command: |
+            rm -rf <<pipeline.parameters.releaser-repo>>
+            git clone git@bitbucket.org:pricehubble/<<pipeline.parameters.releaser-repo>>.git \
+              --depth 1 \
+              --branch <<pipeline.parameters.releaser-branch>>
+            
+            cd <<pipeline.parameters.releaser-repo>>
+
+            EXPECTED_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
+            FOUND_TAG=$(yq '.image.tag' apps/<<parameters.app>>/dev/values.yaml)
+            if [[ "$FOUND_TAG" == "$EXPECTED_TAG" ]]; then
+              echo "bump step updated the correct tag"
+            else
+              echo "bump step failed, expected tag: $EXPECTED_TAG, instead got on HEAD: $FOUND_TAG"
+              exit 1
+            fi
 
 workflows:
   test-pack:
     unless: << pipeline.parameters.run-integration-tests >>
     jobs:
-      - orb-tools/lint
       - orb-tools/pack
       - orb-tools/publish-dev:
           orb-name: pricehubble/ph-circleci-helper
           context: orb-publishing
           requires:
-            - orb-tools/lint
             - orb-tools/pack
+
       # Trigger an integration workflow to test the
       # dev:${CIRCLE_SHA1:0:7} version of your orb
       - orb-tools/trigger-integration-tests-workflow:
@@ -97,14 +149,14 @@ workflows:
   integration-test_deploy:
     when: << pipeline.parameters.run-integration-tests >>
     jobs:
-      - helm-push:
+      - helm:
           context: landing-zone-root
-      - docker-push:
+      - docker:
           context: landing-zone-root
-      - docker-bump:
+      - bump:
           context: landing-zone-root
           requires:
-          - docker-push
+          - docker
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major
@@ -118,8 +170,8 @@ workflows:
           fail-if-semver-not-indicated: true
           publish-version-tag: false
           requires:
-            - docker-bump
-            - helm-push
+            - bump
+            - helm
           filters:
             branches:
               only:

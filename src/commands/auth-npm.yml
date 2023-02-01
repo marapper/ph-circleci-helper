@@ -2,12 +2,6 @@ description: >
   Initializes the gcloud CLI and logs in to the Helm registry.
 
 parameters:
-  gcloud-service-key:
-    type: env_var_name
-    default: GCLOUD_SERVICE_KEY
-    description: |
-      Name of environment variable storing the full service key JSON file for the Google project.
-
   gcloud-disable-prompts:
     type: boolean
     default: true
@@ -73,7 +67,6 @@ parameters:
 
 steps:
   - auth:
-      artifact-registry-type: ""
       artifact-registry-region: << parameters.artifact-registry-region >>
       google-compute-zone: << parameters.google-compute-zone >>
       google-project-id: << parameters.google-project-id >>
@@ -81,7 +74,6 @@ steps:
       google-service-account: << parameters.google-service-account >>
       google-workload-identity-pool-id: << parameters.google-workload-identity-pool-id >>
       google-workload-identity-pool-provider-id: << parameters.google-workload-identity-pool-provider-id >>
-      gcloud-service-key: << parameters.gcloud-service-key >>
   - run:
       name: Authenticate to the npm registry
       command: |

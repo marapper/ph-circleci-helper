@@ -1,13 +1,13 @@
 # based on https://github.com/CircleCI-Public/gcp-cli-orb/blob/master/src/commands/initialize.yml
 description: >
-  Initializes the gcloud CLI and logs in to the Artifact registry.
+  Initializes the gcloud CLI. This command is an `abstract` command reused by other `auth-*` commands and 
+  requires a lot of configuration so its use is discourage in favour of its inherited commands.
+
+  Authentication here goes through [workload identity federation](https://pricehubble.atlassian.net/l/cp/KevZE9Df) wherein 
+  a CircleCI identity (pipeline) is authorized to impersonate a GCP service account and use its short-lived tokens to 
+  perform authenticated queriess to GCP.
 
 parameters:
-  gcloud-service-key:
-    type: env_var_name
-    description: |
-      Name of environment variable storing the full service key JSON file for the Google project.
-
   gcloud-disable-prompts:
     type: boolean
     default: true
@@ -60,16 +60,6 @@ parameters:
 
       If no value is set for the environment variable, artifact registry authentication is skipped.
 
-  artifact-registry-type:
-    type: string
-    description: |
-      Type of artifact registry to authenticate, must be in:
-      - ""
-      - "docker"
-      - "helm"
-      - "npm" (to be implemented)
-      - "pip" (to be implemented)
-
   oidc-token-file-path:
     type: string
     default: $HOME/oidc_token.json
@@ -99,66 +89,3 @@ steps:
         # configure project and region
         gcloud config set project ${<< parameters.google-project-id >>}
         gcloud config set compute/zone ${<< parameters.google-compute-zone >>}
-
-  - when:
-      condition:
-        and:
-        - equal: [ docker, << parameters.artifact-registry-type >> ]
-      steps:
-      - run:
-          name: Authenticate to the docker registry
-          command: |
-            if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
-              echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
-            else
-              gcloud auth configure-docker ${<< parameters.artifact-registry-region >>}
-            fi
-
-  - when:
-      condition:
-        and:
-        - equal: [ helm, << parameters.artifact-registry-type >> ]
-      steps:
-      - run:
-          name: Authenticate to the helm registry
-          command: |
-            if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
-              echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
-            else
-              export GOOGLE_APPLICATION_CREDENTIALS="${HOME}/gcloud-service-key.json"
-              gcloud auth application-default print-access-token | helm registry login -u oauth2accesstoken \
-              --password-stdin ${<< parameters.artifact-registry-region >>}
-            fi
-
-  - when:
-      condition:
-        and:
-        - equal: [ pip, << parameters.artifact-registry-type >> ]
-      steps:
-      - run:
-          name: Authenticate to the pip registry
-          command: |
-            # https://cloud.google.com/artifact-registry/docs/python/authentication#sa-key
-            if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
-              echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
-              exit 0
-            fi
-
-            pip install \
-              keyring==23.8.2 \
-              keyrings.google-artifactregistry-auth==1.0.0
-
-            cat \<<EOF > "${HOME}/.pypirc"
-            [distutils]
-            index-servers =
-              gcp
-
-            [gcp]
-            repository: https://${<< parameters.artifact-registry-region >>}-python.pkg.dev/${<< parameters.google-project-id >>}/pip
-            EOF
-
-            mkdir -p ~/.pip/
-            cat \<<EOF > "${HOME}/.pip/pip.conf"
-            [global]
-            extra-index-url = https://${<< parameters.artifact-registry-region >>}-python.pkg.dev/${<< parameters.google-project-id >>}/pip/simple/
-            EOF

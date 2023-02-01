@@ -4,6 +4,6 @@ description: >
 steps:
   - install-gh-release:
       binary-name: helm
-      url: https://get.helm.sh/helm-v3.8.0-linux-amd64.tar.gz
-      checksum: 8408c91e846c5b9ba15eb6b1a5a79fc22dd4d33ac6ea63388e5698d1b2320c8b
+      url: https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
+      checksum: 6c3440d829a56071a4386dd3ce6254eab113bc9b1fe924a6ee99f7ff869b9e0b
       archive-path: linux-amd64/helm
