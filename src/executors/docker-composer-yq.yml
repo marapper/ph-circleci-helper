@@ -2,7 +2,7 @@ description: >
   Simple Google SDK executor.
 
 docker:
-  - image: europe-west1-docker.pkg.dev/prj-ops-artifact-registry-707c/container/sre/docker-composer-yq:latest
+  - image: europe-west1-docker.pkg.dev/prj-ops-artifact-registry-707c/container/sre/docker-compose-yq:latest
     auth:
       username: _json_key_base64
       password: $DOCKER_REGISTRY_PULL_KEY
