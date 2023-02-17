@@ -123,6 +123,26 @@ jobs:
               exit 1
             fi
 
+  sync:
+    machine: true
+    resource_class: pricehubble/incluster
+    parameters:
+      app:
+        type: string
+        default: circleci-orb-integration-test
+      team:
+        type: string
+        default: sre 
+    steps:
+    - ph/sync-argocd:
+        app: <<parameters.app>>
+        team: <<parameters.team>>
+        env: predev
+    - ph/sync-argocd:
+        app: <<parameters.app>>
+        team: <<parameters.team>>
+        env: dev
+
 workflows:
   test-pack:
     unless: << pipeline.parameters.run-integration-tests >>
@@ -157,6 +177,10 @@ workflows:
           context: landing-zone-root
           requires:
           - docker
+      - sync:
+          context: landing-zone-root
+          requires:
+            - bump
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major

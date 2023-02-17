@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.8] - 2023-02-15
+ - [SRE-1603](https://pricehubble.atlassian.net/browse/SRE-1603) Improve argocd sync step and add integration tests 
+
+## [0.3.7] - 2023-02-06
+ - Correct typo on convenience image naming 
+
+## [0.3.6] - 2023-02-06
+ - [SRE-1579](https://pricehubble.atlassian.net/browse/SRE-1579) Enrich executors with convenience images
+
+## [0.3.5] - 2023-02-01
+ - [SRE-1565](https://pricehubble.atlassian.net/browse/SRE-1565) Improve documentation and test coverage
+
+## [0.3.4] - 2023-01-24
+ - [SRE-1543](https://pricehubble.atlassian.net/browse/SRE-1543) Fix git change detection for the bump step
+
+## [0.3.3] - 2023-01-24
+ - [SRE-1374](https://pricehubble.atlassian.net/browse/SRE-1374) Bump step without changes no longer exits with non 0 code
+
 ## [0.3.2] - 2022-11-25
  - [SRE-1337](https://pricehubble.atlassian.net/browse/SRE-1337) Fix intermittent failures for the bump step 
 

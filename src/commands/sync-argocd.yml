@@ -13,43 +13,54 @@ parameters:
 
   env:
     type: string
+    default: ""
     description: |
       Environment of the application to sync.
 
   team:
     type: string
+    default: ""
     description: |
       Team which owns the application to sync
 
   app:
     type: string
+    default: ""
     description: |
-      Name of the application to sync. Defaults to the following format:
-      {env}-{team}-{app}
+      Name of the application to sync. Defaults to the following selectors:
+        app: <app>
+        team: <team>
+        env: <env>
 
   argocd-app-name:
     type: string
     default: ""
     description: |
-      Name of the ArgoCD application to sync. If defined, overwrites the combined
-      name {env}-{team}-{app}
+      Name of the ArgoCD application to sync.
 
 steps:
   - run:
-      name: Install prerequisite
-      command: |
-        wget -qO argocd <<parameters.argocd-url>>/download/argocd-linux-amd64
-        chmod +x argocd
-
-  - run:
       name: Argocd sync
       command: |
-        APP_NAME="<<parameters.argocd-app-name>>"
-        if [[ -z $APP_NAME ]]; then
-          APP_NAME="<<parameters.env>>-<<parameters.team>>"
-        fi
+        # --plaintext disables TLS
+        # --auth-token gives the auth token in the 
+        # --assumeYes and --preview-changes displays the change and automatically accepts it
+        # --async does not wait for a full sync as the argocd server does not yield a return until timeout despite the application being synced
+        #         This issue occurs due to the fact that the `Operation` gets deleted in between Application state watches (https://github.com/argoproj/argo-cd/issues/12214).
+        #         The additional overhead of the selfhosted runners just makes the issue reproducible. 
+        ARGOCD_APP="<<parameters.argocd-app-name>>"
+        export ARGOCD_SERVER="<<parameters.argocd-url>>"
+        export ARGOCD_OPTS="--plaintext --grpc-web --loglevel debug"
+        export ARGOCD_AUTH_TOKEN=$ARGOCD_AUTH_TOKEN
 
-        ./argocd app sync $APP_NAME \
-          --plaintext \
-          --auth-token $ARGOCD_AUTH_TOKEN \
-          --server <<parameters.argocd-url>>
+        /usr/local/bin/argocd version 
+        if [[ -z "$ARGOCD_APP" ]]; then
+          for app in $(/usr/local/bin/argocd app list -l app=<<parameters.app>>,env=<<parameters.env>>,team=<<parameters.team>> -o name ); do
+            echo "Syncing $app..."
+            /usr/local/bin/argocd app sync $app --assumeYes --preview-changes --async
+            echo "Please go to https://argocd.pricehubble.net/applications/argocd/$app to see the progress" 
+          done
+        else
+          /usr/local/bin/argocd app sync $ARGOCD_APP --assumeYes --preview-changes --async
+          echo "Please go to https://argocd.pricehubble.net/applications/argocd/$ARGOCD_APP to see the progress" 
+        fi 
