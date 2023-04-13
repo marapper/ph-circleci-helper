@@ -167,7 +167,7 @@ steps:
             # which a second safety mechanism to avoid unintentionally overwriting changes
             #
             # NOTE: git push exits 0 even if no changes occurred
-            git pull && \
+            git pull --rebase && \
               git push --force-with-lease --set-upstream origin << parameters.releaser-branch >>
 
             cd -
