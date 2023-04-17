@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.9] - 2023-04-17
+ - [TSR-441](https://pricehubble.atlassian.net/browse/TSR-441) Fix bump step pull when branch has diverged
+
 ## [0.3.8] - 2023-02-15
  - [SRE-1603](https://pricehubble.atlassian.net/browse/SRE-1603) Improve argocd sync step and add integration tests 
 
