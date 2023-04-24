@@ -103,10 +103,14 @@ jobs:
           releaser-repo: <<pipeline.parameters.releaser-repo>>
           releaser-branch: <<pipeline.parameters.releaser-branch>>
           push: true
-
       - run:
           name: Pull the releaser repo and check if the changes are present
           command: |
+            # fetch ssh key
+            gcloud secrets versions access $BITBUCKET_K8S_RELEASER_SECRET_ID \
+              --format='get(payload.data)' | tr '_-' '/+' | base64 -d > ~/.ssh/id_releaser
+            chmod 0400 ~/.ssh/id_releaser
+
             rm -rf <<pipeline.parameters.releaser-repo>>
             git clone git@bitbucket.org:pricehubble/<<pipeline.parameters.releaser-repo>>.git \
               --depth 1 \

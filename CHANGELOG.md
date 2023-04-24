@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.10] - 2023-04-24
+ - Minor fixes to integration tests after [SRE-1624](https://pricehubble.atlassian.net/browse/SRE-1624) (cleanup intermediate credentials)
+ - [TSR-413](https://pricehubble.atlassian.net/browse/TSR-413) Add retry on bump push step
+
 ## [0.3.9] - 2023-04-17
  - [TSR-441](https://pricehubble.atlassian.net/browse/TSR-441) Fix bump step pull when branch has diverged
 
