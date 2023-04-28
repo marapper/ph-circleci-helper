@@ -205,3 +205,65 @@ workflows:
     - publish_pip:
         context: landing-zone-root
 ```
+
+---
+
+## Publish open-api spec
+
+Pricehubble developer portal supports publishing open-api v3 specification in yaml or json format. 
+
+It supports uploading to [predev](https://dev-portal-predev.pricehubble.net/), [dev](https://dev-portal.pricehubble.net/), [preprod](https://dev-portal-preprod.pricehubble.com/), [prod](https://dev-portal.pricehubble.com/) environment
+
+After uploading your specification you can easily get direct link to it based on your environment.
+For file from example `/workdir/some-spec.yaml` link will be [https://dev-portal.pricehubble.net/swagger?openApiUrl=/open-api-specs/some-spec.yaml](https://dev-portal.pricehubble.net/swagger?openApiUrl=/open-api-specs/some-spec.yaml)
+
+
+```yaml
+version: 2.1
+
+orbs:
+  ph: pricehubble/ph-circleci-helper@0.3
+
+jobs:
+  publish_spec:
+    executor: ph/cloud-sdk
+    steps:
+    - checkout
+    - ph/auth-gcp:
+    - ph/upload-open-api-spec:
+        open-api-spec-path: /workdir/some-spec.yaml
+
+workflows:
+  build_deploy:
+    jobs:
+      - publish_spec:
+          matrix:
+            parameters:
+              env: [predev, dev]
+          name: publish_spec_<< matrix.env >>
+          context:
+            - landing-zone-root
+            - dev-portal-open-api-spec-<< matrix.env >>
+          filters:
+            branches:
+              only:
+                - << matrix.env >>
+      - publish_spec:
+          name: publish_spec_preprod
+          context:
+            - landing-zone-root
+            - dev-portal-open-api-spec-preprod
+          filters:
+            branches:
+              only:
+                - /rc-.*/
+      - publish_spec:
+          name: publish_spec_prod
+          context:
+            - landing-zone-root
+            - dev-portal-open-api-spec-prod
+          filters:
+            branches:
+              only:
+                - master
+```

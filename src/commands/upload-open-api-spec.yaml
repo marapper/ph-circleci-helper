@@ -1,0 +1,14 @@
+description: >
+  Upload open api specification.
+
+parameters:
+  open-api-spec-path:
+    type: string
+    description: |
+      Path to open api specification.
+
+steps:
+  - run:
+      name: Upload spec
+      command: |
+        gsutil cp << parameters.open-api-spec-path >> gs://${DEV_PORTAL_BUCKET}/open-api-specs
