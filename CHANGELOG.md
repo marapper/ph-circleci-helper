@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.13] - 2023-05-09
+ - [TSR-540](https://pricehubble.atlassian.net/browse/TSR-540) Add 'cache' for authentication
+
 ## [0.3.12] - 2023-05-09
  - [TSR-529](https://pricehubble.atlassian.net/browse/TSR-529) Add command to fetch ID token for IAP
 

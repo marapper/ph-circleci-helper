@@ -68,6 +68,12 @@ steps:
   - run:
       name: Initialize gcloud
       command: |
+        CURRENT_ACCOUNT=$(gcloud config get-value account)
+        if [[ ${<< parameters.google-service-account >>} == $CURRENT_ACCOUNT ]]; then
+          echo "Already authenticated skipping"
+          exit 0
+        fi
+        
         if [[ "<< parameters.gcloud-disable-prompts >>" = "true" ]]; then
           export CLOUDSDK_CORE_DISABLE_PROMPTS=1
         fi

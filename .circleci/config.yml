@@ -33,6 +33,7 @@ jobs:
     - checkout
     - ph/install-helm
     - ph/install-yq
+    - ph/auth-gcp
     - ph/auth-helm
     - ph/push-helm:
         path: .circleci/tests/helm
