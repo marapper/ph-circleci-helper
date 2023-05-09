@@ -20,7 +20,7 @@ parameters:
   releaser-branch:
     description: releaser repo branch to be used for integration tests.
     type: string
-    default: circleci/integration-tests 
+    default: circleci/integration-tests
   releaser-repo:
     description: releaser repo to be used for integration tests.
     type: string
@@ -41,11 +41,11 @@ jobs:
         command: |
           CHART_VERSION=$(yq e '.version' .circleci/tests/helm/Chart.yaml)
           CHART_NAME=$(yq e '.name' .circleci/tests/helm/Chart.yaml)
-          
+
           gcloud artifacts docker tags list \
             --filter="tag:$CHART_VERSION" \
             europe-west1-docker.pkg.dev/prj-ops-artifact-registry-707c/helm/$CHART_NAME | grep $CHART_VERSION
-  
+
   docker:
     executor: ph/cloud-sdk
     parameters:
@@ -54,7 +54,7 @@ jobs:
         default: circleci-orb-integration-test
       team:
         type: string
-        default: sre 
+        default: sre
     steps:
       - checkout
       - ph/auth-docker
@@ -84,7 +84,7 @@ jobs:
         default: circleci-orb-integration-test
       team:
         type: string
-        default: sre 
+        default: sre
     steps:
       - ph/auth-gcp
       - ph/install-yq
@@ -115,7 +115,7 @@ jobs:
             git clone git@bitbucket.org:pricehubble/<<pipeline.parameters.releaser-repo>>.git \
               --depth 1 \
               --branch <<pipeline.parameters.releaser-branch>>
-            
+
             cd <<pipeline.parameters.releaser-repo>>
 
             EXPECTED_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
@@ -136,7 +136,7 @@ jobs:
         default: circleci-orb-integration-test
       team:
         type: string
-        default: sre 
+        default: sre
     steps:
     - ph/sync-argocd:
         app: <<parameters.app>>
@@ -146,6 +146,23 @@ jobs:
         app: <<parameters.app>>
         team: <<parameters.team>>
         env: dev
+
+  iap:
+    executor: ph/cloud-sdk
+    parameters:
+      url:
+        type: string
+        default: "https://k8s-demo-dev.pricehubble.net/headers"
+      iap-token-file-path:
+        type: string
+        default: "${HOME}/google-iap-token.json"
+    steps:
+    - ph/auth-iap:
+        iap-token-file-path: <<parameters.iap-token-file-path>>
+    - run:
+        name: Check if the ID token works by making a call to an example service
+        command: |
+          curl -v <<parameters.url>> -H "Authorization: Bearer $(cat <<parameters.iap-token-file-path>>)"
 
 workflows:
   test-pack:
@@ -185,6 +202,10 @@ workflows:
           context: landing-zone-root
           requires:
             - bump
+      - iap:
+          context:
+            - landing-zone-root
+            - iap-online-europe-west1-dev
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major
@@ -200,6 +221,7 @@ workflows:
           requires:
             - bump
             - helm
+            - iap
           filters:
             branches:
               only:

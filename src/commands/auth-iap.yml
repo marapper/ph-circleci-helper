@@ -1,0 +1,35 @@
+description: >
+  Fetches an ID token using the service account for IAP access and saves the token to a file.
+
+parameters:
+  iap-audience:
+    type: env_var_name
+    default: GOOGLE_IAP_AUDIENCE
+    description: |
+      Name of environment variable storing the Client ID to be used as audience
+      when requesting the ID token.
+  iap-service-account:
+    type: env_var_name
+    default: GOOGLE_IAP_SERVICE_ACCOUNT
+    description: |
+      Name of environment variable storing the Google service account to be impersonated
+      by the CircleCI job.
+  iap-token-file-path:
+    type: string
+    default: "${HOME}/google-iap-token.json"
+    description: |
+      Path of the file where the IAP ID token will be stored.
+steps:
+  - auth-gcp:
+      google-project-number:  GOOGLE_IAP_PROJECT_NUMBER
+      google-project-id: GOOGLE_IAP_PROJECT_ID
+      google-service-account: <<parameters.iap-service-account>>
+      google-workload-identity-pool-id: GOOGLE_IAP_WORKLOAD_IDENTITY_POOL_ID
+      google-workload-identity-pool-provider-id: GOOGLE_IAP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID
+  - run:
+      name: Fetch IAP ID token
+      command: |
+        gcloud auth print-identity-token \
+          --impersonate-service-account=${<<parameters.iap-service-account>>} \
+          --audiences="${<<parameters.iap-audience>>}" \
+          --include-email >> "<<parameters.iap-token-file-path>>"

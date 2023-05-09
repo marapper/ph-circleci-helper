@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.12] - 2023-05-09
+ - [TSR-529](https://pricehubble.atlassian.net/browse/TSR-529) Add command to fetch ID token for IAP
+
+## [0.3.11] - 2023-04-28
+ - [APIS-12](https://pricehubble.atlassian.net/browse/APIS-95) Add command to upload OpenAPI files to developer portal
+
 ## [0.3.10] - 2023-04-24
  - Minor fixes to integration tests after [SRE-1624](https://pricehubble.atlassian.net/browse/SRE-1624) (cleanup intermediate credentials)
  - [TSR-413](https://pricehubble.atlassian.net/browse/TSR-413) Add retry on bump push step
