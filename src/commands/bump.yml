@@ -91,7 +91,7 @@ steps:
 
         # add bitbucket to known hosts
         # https://support.atlassian.com/bitbucket-cloud/docs/configure-ssh-and-two-step-verification/
-        echo "bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcafrgMeLzaFPsw2kNvEcqTKl/VqLat/MaB33pZy0y3rJZtnqwR2qOOvbwKZYKiEO1O6VqNEBxKvJJelCq0dTXWT5pbO2gDXC6h6QDXCaHo6pOHGPUy+YBaGQRGuSusMEASYiWunYN0vCAI8QaXnWMXNMdFP3jHAJH0eDsoiGnLPBlBp4TNm6rYI74nMzgz3B9IikW4WVK+dc8KZJZWYjAuORU3jc1c/NPskD2ASinf8v3xnfXeukU0sJ5N6m5E8VLjObPEO+mN2t/FZTMZLiFqPWc/ALSqnMnnhwrNi2rbfg/rd/IpL8Le3pSBne8+seeFVBoGqzHM9yXw==" >> ~/.ssh/known_hosts
+        curl https://bitbucket.org/site/ssh >> ~/.ssh/known_hosts
 
         # https://git-scm.com/docs/git-config#Documentation/git-config.txt-coresshCommand
         git config --global core.sshCommand 'ssh -i ~/.ssh/id_releaser -o IdentitiesOnly=yes'
