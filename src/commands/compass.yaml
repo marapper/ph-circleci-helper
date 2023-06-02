@@ -1,0 +1,56 @@
+description: >
+  Configure Compass based on {compass}.yaml config file in root repository
+
+parameters:
+  mission-control-api-host:
+    type: env_var_name
+    default: MISSION_CONTROL_ATLASSIAN_GRAPHQL_API_HOST
+    description: |
+      Host name for Atlassian GraphQL API
+
+  mission-control-api-token:
+    type: env_var_name
+    default: MISSION_CONTROL_ATLASSIAN_GRAPHQL_API_TOKEN
+    description: |
+      Token to get access to Atlassian GraphQL API
+
+  mission-control-api-is-experimental:
+    type: env_var_name
+    default: MISSION_CONTROL_ATLASSIAN_GRAPHQL_API_EXPERIMENTAL
+    description: |
+      If "True" additional "X-ExperimentalApi" header for Atlassian GraphQL API
+
+  mission-control-conf-file:
+    type: env_var_name
+    default: MISSION_CONTROL_CONF_FILE
+    description: |
+      Name of {compass}.yaml config file (in root folder)
+
+  mission-control-branch:
+    type: env_var_name
+    default: MISSION_CONTROL_BRANCH
+    description: |
+      Branch of mission-control repository
+
+  mission-control-custom-field-hash-id:
+    type: env_var_name
+    default: MISSION_CONTROL_CUSTOM_FIELD_HASH_ID
+    description: |
+      ID of custom compass field
+
+  mission-control-version:
+    type: env_var_name
+    default: MISSION_CONTROL_VERSION
+    description: |
+      Version of mission-control application (using in hash)
+
+  mission-control-env:
+    type: env_var_name
+    default: MISSION_CONTROL_ENV_NAME
+    description: |
+      Based on env provide different execution scenarios
+
+steps:
+  - run:
+      name: Update Compass
+      command: /home/mission-control-sync/app/script_for_executor.sh

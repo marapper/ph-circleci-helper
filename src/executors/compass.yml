@@ -1,0 +1,17 @@
+description: >
+  Compass executor with necessary packages/scripts to create/update PH compass components based on config file
+
+docker:
+  - image: europe-west1-docker.pkg.dev/prj-ops-artifact-registry-707c/container/re-assets/mission-control-sync:latest
+    auth:
+      username: _json_key_base64
+      password: $DOCKER_REGISTRY_PULL_KEY
+resource_class: '<< parameters.resource_class >>'
+
+parameters:
+  resource_class:
+    type: string
+    default: "medium"
+    description: >
+      Pick a specific docker resource class:
+      https://circleci.com/docs/2.0/executor-types/#available-docker-resource-classes

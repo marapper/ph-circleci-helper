@@ -267,3 +267,69 @@ workflows:
               only:
                 - master
 ```
+
+---
+
+## Publish compass spec
+
+Pricehubble supports automatically updating information about application/services/library and any other sources in compass via configuration file in prod env.
+
+Create `ph-compass.yaml` in root of your project. See instruction how to do it [here](https://pricehubble.atlassian.net/wiki/spaces/REA/pages/284360752/Mission+Control).
+
+Add compass job before pushing and bumping your image. See example below:
+
+
+```yaml
+version: 2.1
+
+orbs:
+  ph: pricehubble/ph-circleci-helper@0.3
+
+jobs:
+  test:
+    {TEST JOB}
+  compass:
+    executor: ph/compass
+    steps:
+    - checkout
+    - ph/compass  
+  build_push_deploy:
+    executor: ph/cloud-sdk
+    steps:
+    - checkout
+    - ph/auth-docker
+    - {BUILD STEP}
+    - ph/push-docker
+        {PARAMS}
+    - ph/install-yq
+    - ph/bump
+        {PARAMS}
+
+workflows:
+  build_deploy:
+    jobs:
+      - test
+      - compass:
+          context:
+            - landing-zone-root
+            - mission-control
+          requires:
+            - test
+          filters:
+            branches:
+              only:
+                - master
+      - build_push_deploy:
+          context:
+            - landing-zone-root
+          requires:
+            - test
+            - compass
+          filters:
+            branches:
+              only:
+                - predev
+                - dev
+                - /rc-.*/
+                - master
+```
