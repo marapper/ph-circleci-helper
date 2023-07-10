@@ -1,0 +1,46 @@
+description: >
+  Uploads a go module to the registry
+
+parameters:
+  artifact-registry-region:
+    type: env_var_name
+    default: GO_REGISTRY_REGION
+    description: |
+      Name of the environment variable storing the Artifact registry region e.g.
+      us-central1-docker.pkg.dev, europe-west1-docker.pkg.dev.
+
+  artifact-registry-project-id:
+    type: env_var_name
+    default: GO_REGISTRY_PROJECT
+    description: |
+      Name of environment variable storing the Google project ID to set as
+      default for the gcloud CLI.
+
+  version:
+    type: env_var_name
+    description: |
+      Name of the env variable storing the VERSION with the semantic version of the module in the form vX.Y.Z where X is the major version, Y is the minor version, and Z is the patch version.
+      To mark a module as a pre-release version, add a dash after the VERSION and append your module's pre-release identifiers, e.g. v1.0.0-alpha.x.12m.5
+
+  module-path:
+    type: env_var_name
+    description: |
+      Name of the env variable storing the MODULE_PATH with the module path. 
+      For example: example.com/foo See the [Go Modules Reference](https://go.dev/ref/mod#module-path) for more information.
+  
+  source-location:
+    type: env_var_name
+    description: |
+      Name of the env variable storing the SOURCE_LOCATION with the path to the root directory of your Go module. 
+      If you omit this variable, the default is the current directory.
+
+steps:
+  - run:
+      name: Publish go module
+      command: |
+        gcloud artifacts go upload --project=${<< parameters.artifact-registry-project-id >>} \
+          --repository=go \
+          --location=${<< parameters.artifact-registry-region >>} \
+          --version=${<<parameters.version>>} \
+          --module-path=${<<parameters.module-path>>} \
+          --source=${<<parameters.source-location>>}

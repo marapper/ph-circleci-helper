@@ -1,0 +1,78 @@
+description: >
+  Initializes the gcloud CLI and logs in to the Go registry.
+
+parameters:
+  google-project-number:
+    type: env_var_name
+    default: GOOGLE_PROJECT_NUMBER
+    description: |
+      Name of environment variable storing the Google project ID to set as
+      default for the gcloud CLI.
+
+  google-project-id:
+    type: env_var_name
+    default: GO_REGISTRY_PROJECT
+    description: |
+      Name of environment variable storing the Google project ID to set as
+      default for the gcloud CLI.
+
+  google-service-account:
+    type: env_var_name
+    default: GOOGLE_SERVICE_ACCOUNT
+    description: |
+      Name of environment variable storing the Google service account to be impersonated
+      by the CircleCI job.
+
+  google-compute-zone:
+    type: env_var_name
+    default: GO_REGISTRY_ZONE
+    description: |
+      Name of the environment variable storing the Google compute zone to set as
+      default for the gcloud CLI.
+
+  google-workload-identity-pool-id:
+    type: env_var_name
+    default: GOOGLE_WORKLOAD_IDENTITY_POOL_ID
+    description: |
+      Name of environment variable storing the Google workload identity pool id
+      to be bound to the circleci job.
+
+  google-workload-identity-pool-provider-id:
+    type: env_var_name
+    default: GOOGLE_WORKLOAD_IDENTITY_POOL_PROVIDER_ID
+    description: |
+      Name of environment variable storing the Google workload identity provider pool id
+      to be bound to the circleci job.
+
+  artifact-registry-region:
+    type: env_var_name
+    default: GO_REGISTRY_REGION
+    description: |
+      Name of the environment variable storing the Artifact registry region e.g.
+      us-central1-docker.pkg.dev, europe-west1-docker.pkg.dev.
+
+      If no value is set for the environment variable, artifact registry authentication is skipped.
+
+steps:
+  - auth:
+      artifact-registry-region: << parameters.artifact-registry-region >>
+      google-compute-zone: << parameters.google-compute-zone >>
+      google-project-id: << parameters.google-project-id >>
+      google-project-number: << parameters.google-project-number >>
+      google-service-account: << parameters.google-service-account >>
+      google-workload-identity-pool-id: << parameters.google-workload-identity-pool-id >>
+      google-workload-identity-pool-provider-id: << parameters.google-workload-identity-pool-provider-id >>
+
+  - run:
+      name: Authenticate to the go artifact registry
+      command: |
+        if [[ -z ${<< parameters.artifact-registry-region >>} ]]; then
+          echo "Environment variable ${<< parameters.artifact-registry-region >>} not set, skipping artifact registry authentication"
+        else
+          echo 'export GOPROXY="proxy.golang.org"' >> "$BASH_ENV"
+          go run github.com/GoogleCloudPlatform/artifact-registry-go-tools/cmd/auth@v0.1.0 \
+            add-locations --locations=${<< parameters.artifact-registry-region >>}
+   
+          go run github.com/GoogleCloudPlatform/artifact-registry-go-tools/cmd/auth@v0.1.0 refresh
+        fi
+    
