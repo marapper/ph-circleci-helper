@@ -57,10 +57,10 @@ steps:
         if [[ -z "$ARGOCD_APP" ]]; then
           for app in $(/usr/local/bin/argocd app list -l app=<<parameters.app>>,env=<<parameters.env>>,team=<<parameters.team>> -o name ); do
             echo "Syncing $app..."
-            /usr/local/bin/argocd app sync $app --assumeYes --preview-changes --async
+            /usr/local/bin/argocd app sync $app --assumeYes --preview-changes
             echo "Please go to https://argocd.pricehubble.net/applications/argocd/$app to see the progress" 
           done
         else
-          /usr/local/bin/argocd app sync $ARGOCD_APP --assumeYes --preview-changes --async
+          /usr/local/bin/argocd app sync $ARGOCD_APP --assumeYes --preview-changes
           echo "Please go to https://argocd.pricehubble.net/applications/argocd/$ARGOCD_APP to see the progress" 
         fi 
