@@ -12,7 +12,6 @@ parameters:
   fetch_depth:
     description: >
       Limit the fetch depth to the specified number of commit. Pass higher number then `depth` when you want to checkout futher commits
-
       default: 10
     type: integer
     default: 10
@@ -22,14 +21,12 @@ parameters:
       As git doesn't offer tag depth, we can only control if we fetch all tags or not.
       This enables you to stop fetch tags when you have vast numbers of tags during specified fetch depth.
       If this option is enabled and you need tags, specific tags has to be fetched manually
-
       default: false
     type: boolean
     default: false
   path:
     description: >
       Checkout directory (default: job working_directory)
-
       default: "."
     type: string
     default: .
