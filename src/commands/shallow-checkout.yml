@@ -74,12 +74,15 @@ steps:
 
         echo 'gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMqzJeV9rUzU4kWitGjeR4PWSa29SPqJ1fVkhtj3Hw9xjLVXVYrU9QlYWrOLXBpQ6KWjbjTDTdDkoohFzgbEY=
         ' >> "$SSH_CONFIG_DIR/known_hosts"
+
         chmod 0600 "$SSH_CONFIG_DIR/known_hosts"
 
         rm -f "$SSH_CONFIG_DIR/id_rsa"
         (umask 077; touch "$SSH_CONFIG_DIR/id_rsa")
         printf "%s" "$CHECKOUT_KEY" > "$SSH_CONFIG_DIR/id_rsa"
+
         chmod 0600 "$SSH_CONFIG_DIR/id_rsa"
+
         if (: "${CHECKOUT_KEY_PUBLIC?}") 2>/dev/null; then
           rm -f "$SSH_CONFIG_DIR/id_rsa.pub"
           printf "%s" "$CHECKOUT_KEY_PUBLIC" > "$SSH_CONFIG_DIR/id_rsa.pub"
@@ -88,12 +91,12 @@ steps:
         export GIT_SSH_COMMAND='ssh -i "$SSH_CONFIG_DIR/id_rsa" -o UserKnownHostsFile="$SSH_CONFIG_DIR/known_hosts"'
 
         # use git+ssh instead of https
-        git config --global url."ssh://git@github.com".insteadOf "https://github.com" || true
+        git config --global url."ssh://git@bitbucket.org".insteadOf "https://bitbucket.org" || true
         git config --global gc.auto 0 || true
 
         # Define Tag args
         if [ -n "$CIRCLE_TAG" ]; then
-          # only tags operation have default --tags. others will no tag options
+          # only tags operation have default --tags
           clone_tag_args=
           fetch_tag_args="--tags"
         fi
