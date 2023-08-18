@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.18] - 2023-08-18
+ - [TSR-933](https://pricehubble.atlassian.net/browse/TSR-933) Update `pricehubble/incluster` executor runner type
+
 ## [0.3.17] - 2023-07-18
  - [TSR-832](https://pricehubble.atlassian.net/browse/TSR-832) Allow async `argocd/sync` job
 

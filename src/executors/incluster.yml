@@ -1,8 +1,12 @@
 description: >
   Private circleci runner in the GKE cluster.
 
-machine: true
 resource_class: '<< parameters.resource_class >>'
+docker:
+- image: europe-west1-docker.pkg.dev/prj-ops-artifact-registry-707c/container/sre/argocd-cli:48660c19-70f2-4162-8969-9404e4d9e53f.3685c08fbc05e413c34e4a89eb9a1817863b823d
+  auth:
+    username: _json_key_base64
+    password: $DOCKER_REGISTRY_PULL_KEY
 
 parameters:
   resource_class:
