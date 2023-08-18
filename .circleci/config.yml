@@ -133,8 +133,7 @@ jobs:
             fi
 
   sync:
-    machine: true
-    resource_class: pricehubble/incluster
+    executor: ph/incluster
     parameters:
       app:
         type: string
