@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
-## [0.3.18] - 2023-08-18
+## [0.3.21] - 2023-08-23
+ - [TSR-1001](https://pricehubble.atlassian.net/browse/TSR-1001) Make the `argocd/sync` step download the binary from the argo server
+
+## [0.3.18..0.3.20] - 2023-08-18
  - [TSR-933](https://pricehubble.atlassian.net/browse/TSR-933) Update `pricehubble/incluster` executor runner type
 
 ## [0.3.17] - 2023-07-18

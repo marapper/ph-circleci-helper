@@ -40,6 +40,13 @@ parameters:
 
 steps:
   - run:
+      name: Fetch Argocd binary from argocd server
+      command: |
+        curl -sSkL -o /usr/local/bin/argocd \
+          http://<<parameters.argocd-url>>/download/argocd-linux-amd64
+        chmod +x /usr/local/bin/argocd
+
+  - run:
       name: Argocd sync
       command: |
         # --plaintext disables TLS
