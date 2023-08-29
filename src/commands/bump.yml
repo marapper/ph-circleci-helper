@@ -109,9 +109,9 @@ steps:
 
         IMAGE_FULL_PATH="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>"
         if [[ -z "<< parameters.tag >>" ]]; then
-          IMAGE_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
+          export IMAGE_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
         else
-          IMAGE_TAG="<< parameters.tag >>"
+          export IMAGE_TAG="<< parameters.tag >>"
         fi
 
         cd << parameters.releaser-repo >>
@@ -126,7 +126,7 @@ steps:
         fi
 
         echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_TAG\" in ${VALUE_FILE}"
-        yq e "<< parameters.value-tag-reference >> = \"$IMAGE_TAG\"" -i ${VALUE_FILE}
+        yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_TAG)' -i ${VALUE_FILE}
 
         # Detects whether or not a diff occurred
         # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---exit-code

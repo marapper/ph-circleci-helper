@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.22] - 2023-08-29
+ - Make the `argocd/bump` step use proper env variable escaping to allow accessing field with [yq reserved characters](https://mikefarah.gitbook.io/yq/v/v3.x/usage/path-expressions#keys-and-values-with-leading-dashes), e.g. `'.serviceAccount."pricehubble.com/wasm_plugin_version"' = abc`
+
 ## [0.3.21] - 2023-08-23
  - [TSR-1001](https://pricehubble.atlassian.net/browse/TSR-1001) Make the `argocd/sync` step download the binary from the argo server
 
