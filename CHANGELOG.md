@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.23] - 2023-09-11
+ - Disable the `--grpc-web` flag to attempt to lower `argocd-sync` step flakiness from getting rate-limited. 
+
 ## [0.3.22] - 2023-08-29
  - Make the `argocd/bump` step use proper env variable escaping to allow accessing field with [yq reserved characters](https://mikefarah.gitbook.io/yq/v/v3.x/usage/path-expressions#keys-and-values-with-leading-dashes), e.g. `'.serviceAccount."pricehubble.com/wasm_plugin_version"' = abc`
 

@@ -57,7 +57,7 @@ steps:
         #         The additional overhead of the selfhosted runners just makes the issue reproducible. 
         ARGOCD_APP="<<parameters.argocd-app-name>>"
         export ARGOCD_SERVER="<<parameters.argocd-url>>"
-        export ARGOCD_OPTS="--plaintext --grpc-web --loglevel debug"
+        export ARGOCD_OPTS="--plaintext --loglevel debug"
         export ARGOCD_AUTH_TOKEN=$ARGOCD_AUTH_TOKEN
 
         /usr/local/bin/argocd version 
