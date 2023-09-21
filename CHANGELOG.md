@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.24] - 2023-09-21
+ - [TSR-1091](https://pricehubble.atlassian.net/browse/TSR-1091) Add `argocd app wait` in `argocd/sync` to ensure that the pipeline waits for the app to be fully healthy and not just synced.
+
 ## [0.3.23] - 2023-09-11
  - Disable the `--grpc-web` flag to attempt to lower `argocd-sync` step flakiness from getting rate-limited. 
 

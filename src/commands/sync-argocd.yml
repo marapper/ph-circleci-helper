@@ -38,6 +38,12 @@ parameters:
     description: |
       Name of the ArgoCD application to sync.
 
+  timeout:
+    type: integer
+    default: 300
+    description: |
+      Timeout to wait for synced and healthy, in seconds.
+
 steps:
   - run:
       name: Fetch Argocd binary from argocd server
@@ -50,11 +56,8 @@ steps:
       name: Argocd sync
       command: |
         # --plaintext disables TLS
-        # --auth-token gives the auth token in the 
         # --assumeYes and --preview-changes displays the change and automatically accepts it
-        # --async does not wait for a full sync as the argocd server does not yield a return until timeout despite the application being synced
-        #         This issue occurs due to the fact that the `Operation` gets deleted in between Application state watches (https://github.com/argoproj/argo-cd/issues/12214).
-        #         The additional overhead of the selfhosted runners just makes the issue reproducible. 
+        # --async does not wait for a full sync as we use the app wait command to make sure that the application is healthy as well
         ARGOCD_APP="<<parameters.argocd-app-name>>"
         export ARGOCD_SERVER="<<parameters.argocd-url>>"
         export ARGOCD_OPTS="--plaintext --loglevel debug"
@@ -64,10 +67,12 @@ steps:
         if [[ -z "$ARGOCD_APP" ]]; then
           for app in $(/usr/local/bin/argocd app list -l app=<<parameters.app>>,env=<<parameters.env>>,team=<<parameters.team>> -o name ); do
             echo "Syncing $app..."
-            /usr/local/bin/argocd app sync $app --assumeYes --preview-changes
+            /usr/local/bin/argocd app sync $app --assumeYes --preview-changes --async
             echo "Please go to https://argocd.pricehubble.net/applications/argocd/$app to see the progress" 
           done
+          /usr/local/bin/argocd app wait -l app=<<parameters.app>>,env=<<parameters.env>>,team=<<parameters.team>> --timeout <<parameters.timeout>>
         else
-          /usr/local/bin/argocd app sync $ARGOCD_APP --assumeYes --preview-changes
+          /usr/local/bin/argocd app sync $ARGOCD_APP --assumeYes --preview-changes --async
           echo "Please go to https://argocd.pricehubble.net/applications/argocd/$ARGOCD_APP to see the progress" 
+          /usr/local/bin/argocd app wait $ARGOCD_APP --timeout <<parameters.timeout>>
         fi 
