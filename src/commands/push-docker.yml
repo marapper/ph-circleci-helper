@@ -30,6 +30,14 @@ parameters:
     description: |
       Original tag of the image built. Will be retagged to match the Artifact registry format
 
+  rolling-tag:
+    type: boolean
+    default: true
+    description: |
+      Whether or not to automatically push rolling tags for images.
+      These rolling tags are designed for artifact registry cleanup and pinning the specific images remains
+      the preferred method for updating images in ph-releaser.
+
 steps:
   - run:
       name: Push image
@@ -47,3 +55,22 @@ steps:
         IMAGE="${IMAGE_FULL_PATH}:${IMAGE_TAG}"
         docker tag << parameters.source-tag >> $IMAGE
         docker push $IMAGE
+  - when:
+      condition: << parameters.rolling-tag >>
+      steps:
+        - run:
+            name: Push rolling tag
+            command: |
+              TAG=$CIRCLE_TAG
+              # tags will be favored over branches
+              if [[ -z "$CIRCLE_TAG" ]]; then
+                TAG=$CIRCLE_BRANCH
+              fi
+              # replaces all / with - (https://tldp.org/LDP/abs/html/string-manipulation.html)
+              TAG=${TAG//\//-}
+              # lower case all strings
+              TAG=$(echo $TAG | tr "[:upper:]" "[:lower:]")
+
+              IMAGE="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>:$TAG"
+              docker tag << parameters.source-tag >> $IMAGE
+              docker push $IMAGE

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.25] - 2023-10-24
+ - [TSR-1222](https://pricehubble.atlassian.net/browse/TSR-1222) Change default behaviour for the `push-docker` step to also push a rolling tag (defaults to the tag and if no tag is present takes the source branch)
+
 ## [0.3.24] - 2023-09-21
  - [TSR-1091](https://pricehubble.atlassian.net/browse/TSR-1091) Add `argocd app wait` in `argocd/sync` to ensure that the pipeline waits for the app to be fully healthy and not just synced.
 
