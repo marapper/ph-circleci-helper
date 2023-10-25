@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.26] - 2023-10-25
+ - Add the `node-20-chrome-headless` executor.
+
 ## [0.3.25] - 2023-10-24
  - [TSR-1222](https://pricehubble.atlassian.net/browse/TSR-1222) Change default behaviour for the `push-docker` step to also push a rolling tag (defaults to the tag and if no tag is present takes the source branch)
 
