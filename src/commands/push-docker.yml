@@ -153,6 +153,8 @@ steps:
             command: |
               # Fetch image digest
               IMAGE_DIGEST=$(gcloud artifacts docker images describe --format='value(image_summary.digest)' "${IMAGE_URL}:${IMAGE_EXACT_TAG}")
+              
+              # Errors are eaten to avoid breaking existing pipelines and fix issues with duplicate attestation signature
               gcloud beta container binauthz attestations sign-and-create \
                 --impersonate-service-account="${<< parameters.attestation-service-account >>}" \
                 --project="${<< parameters.attestation-project-id >>}" \
@@ -163,4 +165,4 @@ steps:
                 --keyversion-location="${<< parameters.attestation-kms-location >>}" \
                 --keyversion-keyring="${<< parameters.attestation-kms-keyring >>}" \
                 --keyversion-key="${<< parameters.attestation-kms-key >>}" \
-                --keyversion="${<< parameters.attestation-kms-key-version >>}"
+                --keyversion="${<< parameters.attestation-kms-key-version >>}" || :
