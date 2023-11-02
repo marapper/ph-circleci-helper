@@ -71,6 +71,7 @@ jobs:
           command: |
             docker build -t <<parameters.app>>:latest .circleci/tests/docker
       - ph/push-docker:
+          attest: true
           team: <<parameters.team>>
           app: <<parameters.app>>
           source-tag: <<parameters.app>>:latest

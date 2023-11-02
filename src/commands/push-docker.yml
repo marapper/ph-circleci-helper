@@ -38,21 +38,102 @@ parameters:
       These rolling tags are designed for artifact registry cleanup and pinning the specific images remains
       the preferred method for updating images in ph-releaser.
 
+  attest:
+    type: boolean
+    default: false
+    description: |
+      Whether or not to sign and add an attestation to the pushed image.
+
+  attestation-project-id:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTATION_PROJECT_ID
+    description: |
+      Name of environment variable storing the Google project ID where the attestation is to be generated.
+
+  attestator-name:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTOR_NAME
+    description: |
+      Name of environment variable storing the name of the attestator to be used.
+
+  attestor-project-id:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTOR_PROJECT_ID
+    description: |
+      Name of environment variable storing the Google project ID where the attestor is located.
+
+  attestation-kms-project:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTATION_KMS_PROJECT
+    description: |
+      Name of environment variable storing the Google project ID where the KMS 
+      used for signing and verifying attestation is located.
+  
+  attestation-kms-location:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTATION_KMS_LOCATION
+    description: |
+      Name of environment variable storing the location where the KMS 
+      used for signing and verifying attestation is located.
+  
+  attestation-kms-keyring:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTATION_KMS_KEYRING
+    description: |
+      Name of environment variable storing the keyring where the KMS 
+      used for signing and verifying attestation is located.
+  
+  attestation-kms-key:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTATION_KMS_KEY
+    description: |
+      Name of environment variable storing the KMS key name used 
+      for signing and verifying attestation is located.
+    
+  attestation-kms-key-version:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTATION_KMS_KEY_VERSION
+    description: |
+      Name of environment variable storing the KMS key version used 
+      for signing and verifying attestation is located.
+    
+  attestation-service-account:
+    type: env_var_name
+    default: BINARY_AUTH_ATTESTATION_SERVICE_ACCOUNT
+    description: |
+      Name of environment variable storing the service account used
+      for signing and adding attestations.
+
 steps:
+  - run:
+      name: Set common env variables
+      command: |
+        echo "export IMAGE_URL=${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>" >> "$BASH_ENV"
+
+        if [[ -z "<< parameters.tag >>" ]]; then
+          IMAGE_EXACT_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
+        else
+          NON_NORMALIZED_IMAGE_EXACT_TAG="<< parameters.tag >>"
+          # replaces all / with _ (https://tldp.org/LDP/abs/html/string-manipulation.html)
+          IMAGE_EXACT_TAG=${NON_NORMALIZED_IMAGE_EXACT_TAG//\//_}
+        fi
+        echo "export IMAGE_EXACT_TAG=$IMAGE_EXACT_TAG" >> "$BASH_ENV"
+
+        ROLLING_TAG=$CIRCLE_TAG
+        # tags will be favored over branches
+        if [[ -z "$CIRCLE_TAG" ]]; then
+          ROLLING_TAG=$CIRCLE_BRANCH
+        fi
+        # replaces all / with - (https://tldp.org/LDP/abs/html/string-manipulation.html)
+        ROLLING_TAG=${ROLLING_TAG//\//-}
+        # lower case all strings
+        ROLLING_TAG=$(echo $ROLLING_TAG | tr "[:upper:]" "[:lower:]")
+        echo "export ROLLING_TAG=$ROLLING_TAG" >> "$BASH_ENV"
   - run:
       name: Push image
       command: |
-        IMAGE_FULL_PATH="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>"
-
-        if [[ -z "<< parameters.tag >>" ]]; then
-          IMAGE_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
-        else
-          NON_NORMALIZED_IMAGE_TAG="<< parameters.tag >>"
-          # replaces all / with _ (https://tldp.org/LDP/abs/html/string-manipulation.html)
-          IMAGE_TAG=${NON_NORMALIZED_IMAGE_TAG//\//_}
-        fi
-
-        IMAGE="${IMAGE_FULL_PATH}:${IMAGE_TAG}"
+        cat $BASH_ENV
+        IMAGE="${IMAGE_URL}:${IMAGE_EXACT_TAG}"
         docker tag << parameters.source-tag >> $IMAGE
         docker push $IMAGE
   - when:
@@ -61,16 +142,25 @@ steps:
         - run:
             name: Push rolling tag
             command: |
-              TAG=$CIRCLE_TAG
-              # tags will be favored over branches
-              if [[ -z "$CIRCLE_TAG" ]]; then
-                TAG=$CIRCLE_BRANCH
-              fi
-              # replaces all / with - (https://tldp.org/LDP/abs/html/string-manipulation.html)
-              TAG=${TAG//\//-}
-              # lower case all strings
-              TAG=$(echo $TAG | tr "[:upper:]" "[:lower:]")
-
-              IMAGE="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>:$TAG"
+              IMAGE="${IMAGE_URL}:${ROLLING_TAG}"
               docker tag << parameters.source-tag >> $IMAGE
               docker push $IMAGE
+  - when:
+      condition: << parameters.attest >>
+      steps:
+        - run:
+            name: Attest and sign artifact
+            command: |
+              # Fetch image digest
+              IMAGE_DIGEST=$(gcloud artifacts docker images describe --format='value(image_summary.digest)' "${IMAGE_URL}:${IMAGE_EXACT_TAG}")
+              gcloud beta container binauthz attestations sign-and-create \
+                --impersonate-service-account="${<< parameters.attestation-service-account >>}" \
+                --project="${<< parameters.attestation-project-id >>}" \
+                --artifact-url="${IMAGE_URL}@${IMAGE_DIGEST}" \
+                --attestor="${<< parameters.attestator-name >>}" \
+                --attestor-project="${<< parameters.attestor-project-id >>}" \
+                --keyversion-project="${<< parameters.attestation-kms-project >>}" \
+                --keyversion-location="${<< parameters.attestation-kms-location >>}" \
+                --keyversion-keyring="${<< parameters.attestation-kms-keyring >>}" \
+                --keyversion-key="${<< parameters.attestation-kms-key >>}" \
+                --keyversion="${<< parameters.attestation-kms-key-version >>}"

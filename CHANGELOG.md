@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.27] - 2023-11-02
+ - [TSR-886](https://pricehubble.atlassian.net/browse/TSR-886) Add the attestation and signature in the push-docker step.
+
 ## [0.3.26] - 2023-10-25
  - Add the `node-20-chrome-headless` executor.
 
