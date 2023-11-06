@@ -101,7 +101,7 @@ jobs:
           releaser-repo: <<pipeline.parameters.releaser-repo>>
           releaser-branch: <<pipeline.parameters.releaser-branch>>
           push: false
-
+          use-digest: true
       - ph/bump:
           team: <<parameters.team>>
           app: <<parameters.app>>
@@ -109,6 +109,7 @@ jobs:
           releaser-repo: <<pipeline.parameters.releaser-repo>>
           releaser-branch: <<pipeline.parameters.releaser-branch>>
           push: true
+          use-digest: false
       - run:
           name: Pull the releaser repo and check if the changes are present
           command: |

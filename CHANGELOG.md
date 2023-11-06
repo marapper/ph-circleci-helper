@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.28] - 2023-11-06
+ - [TSR-1236](https://pricehubble.atlassian.net/browse/TSR-1236) Add the option to bump using image digests with the `use-digest: true` parameter.
+
 ## [0.3.27] - 2023-11-02
  - [TSR-886](https://pricehubble.atlassian.net/browse/TSR-886) Add the attestation and signature in the push-docker step.
 

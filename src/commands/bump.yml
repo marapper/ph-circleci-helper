@@ -72,6 +72,13 @@ parameters:
     default: true
     description: |
       Whether or not to push the commit
+  
+  use-digest:
+    type: boolean
+    default: false
+    description: |
+      Whether or not to replace the image tag with it's corresponding digest.
+      NOTE: this requires that a prior ph/auth-docker is run.
 
 steps:
   - run:
@@ -110,6 +117,10 @@ steps:
         IMAGE_FULL_PATH="${<< parameters.artifact-registry-url >>}/<< parameters.team >>/<< parameters.app >>"
         if [[ -z "<< parameters.tag >>" ]]; then
           export IMAGE_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
+        
+          if [[ "<< parameters.use-digest >>" = "true" ]]; then
+            export IMAGE_DIGEST=$(gcloud artifacts docker images describe --format='value(image_summary.digest)' "${IMAGE_FULL_PATH}:${IMAGE_TAG}")
+          fi
         else
           export IMAGE_TAG="<< parameters.tag >>"
         fi
@@ -125,8 +136,14 @@ steps:
           VALUE_FILE=<< parameters.value-file >>
         fi
 
-        echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_TAG\" in ${VALUE_FILE}"
-        yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_TAG)' -i ${VALUE_FILE}
+        if [[ "<< parameters.use-digest >>" = "true" ]]; then
+          echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_DIGEST\" in ${VALUE_FILE}"
+          yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_DIGEST)' -i ${VALUE_FILE}
+          yq e '<< parameters.value-tag-reference >> line_comment="strenv(IMAGE_TAG)"' -i ${VALUE_FILE}
+        else
+          echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_TAG\" in ${VALUE_FILE}"
+          yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_TAG)' -i ${VALUE_FILE}
+        fi
 
         # Detects whether or not a diff occurred
         # https://git-scm.com/docs/git-diff#Documentation/git-diff.txt---exit-code
