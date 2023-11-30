@@ -68,11 +68,13 @@ steps:
           for app in $(/usr/local/bin/argocd app list -l app=<<parameters.app>>,env=<<parameters.env>>,team=<<parameters.team>> -o name ); do
             echo "Syncing $app..."
             /usr/local/bin/argocd app sync $app --assumeYes --preview-changes --async
+            /usr/local/bin/argocd app set $app --sync-policy automated --self-heal
             echo "Please go to https://argocd.pricehubble.net/applications/argocd/$app to see the progress" 
           done
           /usr/local/bin/argocd app wait -l app=<<parameters.app>>,env=<<parameters.env>>,team=<<parameters.team>> --timeout <<parameters.timeout>>
         else
           /usr/local/bin/argocd app sync $ARGOCD_APP --assumeYes --preview-changes --async
+          /usr/local/bin/argocd app set $ARGOCD_APP --sync-policy automated --self-heal
           echo "Please go to https://argocd.pricehubble.net/applications/argocd/$ARGOCD_APP to see the progress" 
           /usr/local/bin/argocd app wait $ARGOCD_APP --timeout <<parameters.timeout>>
         fi 
