@@ -119,7 +119,12 @@ steps:
           export IMAGE_TAG="${CIRCLE_WORKFLOW_ID}.${CIRCLE_SHA1}"
         
           if [[ "<< parameters.use-digest >>" = "true" ]]; then
-            export IMAGE_DIGEST=$(gcloud artifacts docker images describe --format='value(image_summary.digest)' "${IMAGE_FULL_PATH}:${IMAGE_TAG}")
+            export IMAGE_DIGEST=$(gcloud artifacts docker images list "${IMAGE_FULL_PATH}" --format='value(version)' --include-tags --quiet --filter="tags:(${IMAGE_TAG})")
+            echo $IMAGE_DIGEST
+            if [ $? -ne 0 ]; then
+              echo "Failed to translate image tag ${IMAGE_TAG} to sha256..."
+              exit 1
+            fi
           fi
         else
           export IMAGE_TAG="<< parameters.tag >>"

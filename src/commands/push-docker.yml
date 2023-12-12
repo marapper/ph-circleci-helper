@@ -152,17 +152,35 @@ steps:
             name: Attest and sign artifact
             command: |
               # Fetch image digest
-              IMAGE_DIGEST=$(gcloud artifacts docker images describe --format='value(image_summary.digest)' "${IMAGE_URL}:${IMAGE_EXACT_TAG}")
-              
-              # Errors are eaten to avoid breaking existing pipelines and fix issues with duplicate attestation signature
-              gcloud beta container binauthz attestations sign-and-create \
+              IMAGE="${IMAGE_URL}:${IMAGE_EXACT_TAG}"
+              IMAGE_DIGEST=$(docker images --no-trunc --quiet $IMAGE)
+              echo $IMAGE_DIGEST
+              ARTIFACT_URL="${IMAGE_URL}@${IMAGE_DIGEST}"
+
+              ATTESTATION_LIST=$(gcloud beta container binauthz attestations list \
                 --impersonate-service-account="${<< parameters.attestation-service-account >>}" \
-                --project="${<< parameters.attestation-project-id >>}" \
-                --artifact-url="${IMAGE_URL}@${IMAGE_DIGEST}" \
+                --artifact-url=$ARTIFACT_URL \
                 --attestor="${<< parameters.attestator-name >>}" \
                 --attestor-project="${<< parameters.attestor-project-id >>}" \
-                --keyversion-project="${<< parameters.attestation-kms-project >>}" \
-                --keyversion-location="${<< parameters.attestation-kms-location >>}" \
-                --keyversion-keyring="${<< parameters.attestation-kms-keyring >>}" \
-                --keyversion-key="${<< parameters.attestation-kms-key >>}" \
-                --keyversion="${<< parameters.attestation-kms-key-version >>}" || :
+                --format=json)
+              echo $ATTESTATION_lIST
+
+              # If no attestation prior attestation are found, the API responds with an empty json array `[]`.
+              # jq was not a prerequisites in prior versions of the orb, so we just do a bash string comparison for backwards compatibility
+              if [[ $ATTESTATION_lIST = "[]" ]]; then
+                gcloud beta container binauthz attestations sign-and-create \
+                  --impersonate-service-account="${<< parameters.attestation-service-account >>}" \
+                  --project="${<< parameters.attestation-project-id >>}" \
+                  --artifact-url=$ARTIFACT_URL \
+                  --attestor="${<< parameters.attestator-name >>}" \
+                  --attestor-project="${<< parameters.attestor-project-id >>}" \
+                  --keyversion-project="${<< parameters.attestation-kms-project >>}" \
+                  --keyversion-location="${<< parameters.attestation-kms-location >>}" \
+                  --keyversion-keyring="${<< parameters.attestation-kms-keyring >>}" \
+                  --keyversion-key="${<< parameters.attestation-kms-key >>}" \
+                  --keyversion="${<< parameters.attestation-kms-key-version >>}"
+              else
+                echo "Attestation already exists for this attestor(projects/${<< parameters.attestor-project-id >>}/attestator/${<< parameters.attestator-name >>}) and artifact-url(${ARTIFACT_URL}), skipping image signing."
+              fi
+
+              

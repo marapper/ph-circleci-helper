@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.29] - 2023-12-12
+ - Bump `ph/cloud-sdk` image to [456.0.0](https://cloud.google.com/sdk/docs/release-notes#45600_2023-12-05)
+ - [TSR-1298](https://pricehubble.atlassian.net/browse/TSR-1298) Stabilize image signing by improving error handling for duplicate signatures.
+ - Use local docker digest instead of fetching it via the artifact registry
+ - Fix issues with gcloud artifact docker images describe that requires an insane amount of permissions in container analysis is enabled
+ - Add checks for tag → digest search in the bump step
+
 ## [0.3.28] - 2023-11-06
  - [TSR-1236](https://pricehubble.atlassian.net/browse/TSR-1236) Add the option to bump using image digests with the `use-digest: true` parameter.
 
