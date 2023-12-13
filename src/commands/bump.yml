@@ -144,7 +144,7 @@ steps:
         if [[ "<< parameters.use-digest >>" = "true" ]]; then
           echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_DIGEST\" in ${VALUE_FILE}"
           yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_DIGEST)' -i ${VALUE_FILE}
-          yq e '<< parameters.value-tag-reference >> line_comment="strenv(IMAGE_TAG)"' -i ${VALUE_FILE}
+          yq e '<< parameters.value-tag-reference >> line_comment=strenv(IMAGE_TAG)' -i ${VALUE_FILE}
         else
           echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_TAG\" in ${VALUE_FILE}"
           yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_TAG)' -i ${VALUE_FILE}

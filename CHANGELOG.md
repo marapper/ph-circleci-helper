@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.3.30] - 2023-12-12
+ - Fix bug with image tag comment not interpolated in the bump step.
+
 ## [0.3.29] - 2023-12-12
  - Bump `ph/cloud-sdk` image to [456.0.0](https://cloud.google.com/sdk/docs/release-notes#45600_2023-12-05)
  - [TSR-1298](https://pricehubble.atlassian.net/browse/TSR-1298) Stabilize image signing by improving error handling for duplicate signatures.
