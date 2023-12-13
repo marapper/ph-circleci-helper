@@ -75,7 +75,7 @@ parameters:
   
   use-digest:
     type: boolean
-    default: false
+    default: true
     description: |
       Whether or not to replace the image tag with it's corresponding digest.
       NOTE: this requires that a prior ph/auth-docker is run.

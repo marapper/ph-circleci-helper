@@ -40,7 +40,7 @@ parameters:
 
   attest:
     type: boolean
-    default: false
+    default: true
     description: |
       Whether or not to sign and add an attestation to the pushed image.
 

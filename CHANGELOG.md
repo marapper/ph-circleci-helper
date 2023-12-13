@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.4.0] - 2023-12-12
+ - Set docker step default `attest: true`
+ - Set bump step default `use-digest: true`
+
 ## [0.3.30] - 2023-12-12
  - Fix bug with image tag comment not interpolated in the bump step.
 
