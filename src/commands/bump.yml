@@ -141,13 +141,29 @@ steps:
           VALUE_FILE=<< parameters.value-file >>
         fi
 
+        __yq_inplace() {
+          local FILE=$1
+          local TAG=$2
+          local COMMAND=$3
+          
+          OLD_LINE=$(yq --header-preprocess=false "$TAG | line" $FILE)
+          yq "$COMMAND" $FILE > $FILE.tmp
+
+          NEW_LINE=$(yq --header-preprocess=false "$TAG | line" $FILE)
+          NEW_VALUE=$(sed -n "${NEW_LINE}p;d" < $FILE.tmp)
+
+          sed -i "${OLD_LINE}s/.*/${NEW_VALUE}/" "$FILE"
+          rm "${FILE}.tmp"
+        }
+
+        set -x
         if [[ "<< parameters.use-digest >>" = "true" ]]; then
           echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_DIGEST\" in ${VALUE_FILE}"
-          yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_DIGEST)' -i ${VALUE_FILE}
-          yq e '<< parameters.value-tag-reference >> line_comment=strenv(IMAGE_TAG)' -i ${VALUE_FILE}
+          __yq_inplace "${VALUE_FILE}" '<< parameters.value-tag-reference >>' '<< parameters.value-tag-reference >> = strenv(IMAGE_DIGEST)'
+          __yq_inplace "${VALUE_FILE}" '<< parameters.value-tag-reference >>' '<< parameters.value-tag-reference >> line_comment=strenv(IMAGE_TAG)'
         else
           echo "Bumping << parameters.value-tag-reference >> = \"$IMAGE_TAG\" in ${VALUE_FILE}"
-          yq e '<< parameters.value-tag-reference >> = strenv(IMAGE_TAG)' -i ${VALUE_FILE}
+          __yq_inplace "${VALUE_FILE}" '<< parameters.value-tag-reference >>' '<< parameters.value-tag-reference >> = strenv(IMAGE_TAG)'
         fi
 
         # Detects whether or not a diff occurred

@@ -4,5 +4,5 @@ description: >
 steps:
   - install-gh-release:
       binary-name: yq
-      url: https://github.com/mikefarah/yq/releases/download/v4.30.7/yq_linux_amd64
-      checksum: 4dd4c27f94e78f8b9e6b50e558ad6b3aef5f08e12970f9ee1a3ef90537357a4a
+      url: https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64
+      checksum: 0d6aaf1cf44a8d18fbc7ed0ef14f735a8df8d2e314c4cc0f0242d35c0a440c95

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.4.1] - 2023-12-28
+ - [TSR-1357](https://pricehubble.atlassian.net/browse/TSR-1357) The `ph/bump` step now preserves whitespace and comments.
+
 ## [0.4.0] - 2023-12-12
  - Set docker step default `attest: true`
  - Set bump step default `use-digest: true`
