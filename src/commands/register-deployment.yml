@@ -1,0 +1,85 @@
+description: >
+  Triggers [Devlake](https://devlake.pricehubble.net/) webhook to register a deployment.
+  
+  Run it only against production deployment.
+  Job also should  includes the steps to authenticate to the cluster.
+  - ph/auth-gcp
+  - ph/auth-iap
+
+parameters:
+  start-time:
+    type: string
+    default: ''
+    description: |
+      The date and time when the deployment started, in ISO 8601 format.
+      For example, 2024-01-01T09:45:02.123456789Z.
+      By default, the current time is used.
+
+  deploy-time:
+    type: string
+    default: ''
+    description: |
+      The date and time when the deployment ended, in ISO 8601 format.
+      Use it only when you need to create a deployment in the past.
+      By default, Devlake will take the exact time of the request was made.
+
+  commit-sha:
+    type: string
+    default: ''
+    description: |
+      Hash of the HEAD commit for deployment. By default, the latest commit of branch is used.
+
+  deploy-result:
+    type: enum
+    enum: [ "SUCCESS", "FAILURE", "ABORT", "MANUAL", "" ]
+    default: ''
+    description: |
+      Deployment result in case we want to collect issues in pipelines. The default value is SUCCESS.
+
+  webhook-url:
+    type: string
+    default: https://devlake.pricehubble.net/api/plugins/webhook/4/deployments
+    description: |
+      Devlake Webhook URL with current version.
+      Override it only for testing purposes.
+      See documentation https://devlake.apache.org/docs/Plugins/webhook/
+
+  iap-token-file-path:
+    type: string
+    default: '${HOME}/google-iap-token.json'
+    description: |
+      Path of the file where the IAP ID token will be stored.
+
+steps:
+  - run:
+      name: 'Register Deployment in DevLake'
+      command: |
+        START_TIME=`date '+%Y-%m-%dT%H:%M:%S%z'`
+        if [ ! -z "<< parameters.start-time >>" ]; then
+            START_TIME="<< parameters.start-time >>"
+        fi
+        COMMIT_SHA="$CIRCLE_SHA1"
+        if [ ! -z "<< parameters.commit-sha >>" ]; then
+            COMMIT_SHA="<< parameters.commit-sha >>"
+        fi
+        REQUEST_PARAMS="\"start_time\" : \"$START_TIME\""
+        if [ ! -z "<< parameters.deploy-time >>" ]; then
+            REQUEST_PARAMS="$REQUEST_PARAMS, \"end_time\" : \"<< parameters.deploy-time >>\""
+        fi
+        if [ ! -z "<< parameters.deploy-result >>" ]; then
+            REQUEST_PARAMS="$REQUEST_PARAMS, \"result\" : \"<< parameters.deploy-result >>\""
+        fi
+        OUTPUT_FILE=$(mktemp)
+        HTTP_CODE=$(curl << parameters.webhook-url >> \
+          -H "Authorization: Bearer $(cat <<parameters.iap-token-file-path>>)" \
+          -X 'POST' \
+          -d "{\"commit_sha\" : \"$COMMIT_SHA\", \"repo_url\" : \"$CIRCLE_REPOSITORY_URL\", $REQUEST_PARAMS}" \
+          --output $OUTPUT_FILE --write-out "%{http_code}"
+        )
+        if [[ ${HTTP_CODE} -lt 200 || ${HTTP_CODE} -gt 299 ]] ; then
+          echo "Failed to send information about deployment at ${CIRCLE_SHA1} for ${CIRCLE_REPOSITORY_URL} repo"
+          >&2 cat $OUTPUT_FILE
+          exit 1
+        else
+          echo "Successfully send information about deployment at ${CIRCLE_SHA1} for ${CIRCLE_REPOSITORY_URL} repo"
+        fi
