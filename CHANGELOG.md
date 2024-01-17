@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
  - Current development changes [ to be moved to release ]
 
+## [0.4.2] - 2024-01-17
+ - The `ph/auth-python` step now installs keyrings with the `--break-system-packages` option.
+
 ## [0.4.1] - 2023-12-28
  - [TSR-1357](https://pricehubble.atlassian.net/browse/TSR-1357) The `ph/bump` step now preserves whitespace and comments.
 
