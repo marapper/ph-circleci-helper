@@ -79,9 +79,9 @@ steps:
           exit 0
         fi
 
-        pip install \
-          keyring==23.8.2 \
-          keyrings.google-artifactregistry-auth==1.0.0
+        pip install --break-system-packages \
+          keyring \
+          keyrings.google-artifactregistry-auth
 
         cat \<<EOF > "${HOME}/.pypirc"
         [distutils]
